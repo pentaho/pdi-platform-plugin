@@ -1,0 +1,15 @@
+<project name="Kettle Platform Plugin" basedir="." default="default" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+	<!-- Import the subfloor-pkg.xml file which contains all the default tasks -->
+	<import file="build-res/subfloor-pkg.xml" />
+
+	<!-- Copy all jars over to the plugin zip, 
+	  except for pentaho platform jars which the platform provides -->
+	<target name="assemble.copy-libs">
+		<copy todir="${approot.stage.dir}/lib">
+			<fileset dir="${lib.dir}" excludes="**/*.jar, **/*.rar" />
+			<fileset file="${dist.dir}/${ivy.artifact.id}-${project.revision}.jar" />
+		</copy>
+	</target>
+
+</project>

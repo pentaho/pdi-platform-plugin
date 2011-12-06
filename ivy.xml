@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
+    <info organisation="${ivy.artifact.group}" module="${ivy.artifact.id}" revision="${project.revision}" />
+    
+    <configurations>
+    	<conf name="default"/>
+    	<conf name="runtime"/>
+    	<conf name="source" />    	
+    	<conf name="test" visibility="private"/>
+    </configurations>
+    
+    <publications>
+	    <artifact name="${ivy.artifact.id}" type="jar" conf="default"/>
+	    <artifact name="${ivy.artifact.id}" m:classifier="sources" type="source" ext="jar" conf="source"/>
+    </publications>   
+    
+    <dependencies defaultconf="default->default">
+		<!-- internal pentaho platform dependencies -->
+		<dependency org="pentaho" name="pentaho-platform-api" rev="${dependency.pentaho-platform.revision}"  changing="true" />
+		<dependency org="pentaho" name="pentaho-platform-core" rev="${dependency.pentaho-platform.revision}"  changing="true" />
+		<dependency org="pentaho" name="pentaho-platform-repository" rev="${dependency.pentaho-platform.revision}"  changing="true" />
+		<dependency org="pentaho" name="pentaho-platform-extensions" rev="${dependency.pentaho-platform.revision}"  changing="true" />
+
+    	<dependency org="pentaho-kettle" name="kettle-engine" rev="${dependency.kettle.revision}" changing="true"/>
+    	<dependency org="pentaho-kettle" name="kettle-core" rev="${dependency.kettle.revision}" changing="true"/>
+    	<dependency org="pentaho-kettle" name="kettle-db" rev="${dependency.kettle.revision}" changing="true"/>
+
+        <!--  test dependencies -->
+        <dependency org="pentaho" name="pentaho-platform-core-test" rev="${dependency.pentaho-platform.revision}"  changing="true" conf="test->default"/>
+        <dependency org="junit" name="junit" rev="4.4" conf="test->default" />
+        <dependency org="hsqldb" name="hsqldb" rev="1.8.0" conf="test->default" transitive="false"/>
+     </dependencies>
+</ivy-module>

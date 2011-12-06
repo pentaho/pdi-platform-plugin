@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin title="Kettle Platform Plugin" name="pdi-platform-plugin">
+
+   <lifecycle-listener class="org.pentaho.platform.plugin.kettle.PdiLifecycleListener"/>
+
+   <static-paths>
+     <!-- this translates to /pentaho/content/pdi-platform-plugin/resources/* -->
+     <static-path url="/pdi-platform-plugin/resources" localFolder="resources"/>
+   </static-paths>
+
+    <menu-items/>
+
+    <overlays/>
+
+    <content-types>
+      <content-type type="ktr" mime-type="text/plain">
+        <title>Kettle Transformation</title>
+        <description>Pentaho Data Integration Transformation</description>
+        <icon-url>content/pdi-platform-plugin/resources/images/transformation.png</icon-url>
+        <meta-provider>org.pentaho.platform.plugin.kettle.PdiFileInfo</meta-provider>
+        <operations>
+          <!-- for any of these urls, you can add layout=flow to the url -->
+          <operation>
+            <id>RUN</id>
+            <perspective>viewer</perspective>
+          </operation>
+          <operation>
+            <id>NEWWINDOW</id>
+            <perspective>viewer</perspective>
+          </operation>
+          <operation>
+            <id>SCHEDULE_NEW</id>
+            <perspective>viewer</perspective>
+          </operation>
+          <operation>
+            <id>SCHEDULE_EDIT</id>
+            <perspective>viewer</perspective>
+          </operation>
+          <operation>
+            <id>BACKGROUND</id>
+          </operation>
+          <operation>
+            <id>PARAMETER</id>
+          </operation>
+        </operations>
+      </content-type>
+      <content-type type="kjb" mime-type="text/plain">
+        <title>Kettle Job</title>
+        <description>Pentaho Data Integration Job</description>
+        <icon-url>content/pdi-platform-plugin/resources/images/job.png</icon-url>
+        <meta-provider>org.pentaho.platform.plugin.kettle.PdiFileInfo</meta-provider>
+        <operations>
+          <!-- for any of these urls, you can add layout=flow to the url -->
+          <operation>
+            <id>RUN</id>
+            <perspective>viewer</perspective>
+          </operation>
+          <operation>
+            <id>NEWWINDOW</id>
+            <perspective>viewer</perspective>
+          </operation>
+          <operation>
+            <id>SCHEDULE_NEW</id>
+            <perspective>viewer</perspective>
+          </operation>
+          <operation>
+            <id>SCHEDULE_EDIT</id>
+            <perspective>viewer</perspective>
+          </operation>
+          <operation>
+            <id>BACKGROUND</id>
+          </operation>
+          <operation>
+            <id>PARAMETER</id>
+          </operation>
+        </operations>
+      </content-type>      
+    </content-types>
+
+</plugin>
+
