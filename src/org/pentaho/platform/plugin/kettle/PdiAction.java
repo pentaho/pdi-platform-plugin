@@ -731,7 +731,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
       // It's running in a separate tread to allow monitoring, etc.
       if (log.isDebugEnabled())
         log.debug(Messages.getInstance().getString("Kettle.DEBUG_JOB_RUNNING")); //$NON-NLS-1$
-      localJob.waitUntilFinished(5000000);
+      localJob.waitUntilFinished();
       int jobErrors = localJob.getErrors();
       long jobResultErrors = localJob.getResult().getNrErrors();
       if ((jobErrors > 0) || (jobResultErrors > 0)) {
