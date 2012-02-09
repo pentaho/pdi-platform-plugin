@@ -12,10 +12,8 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright 2006 - 2009 Pentaho Corporation.  All rights reserved.
+ * Copyright 2006 - 2012 Pentaho Corporation.  All rights reserved.
  *
- * Created Jan 9, 2006 
- * @author mbatchel
  */
 package org.pentaho.platform.plugin.kettle;
 

@@ -1,3 +1,20 @@
+/*
+ * This program is free software; you can redistribute it and/or modify it under the 
+ * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software 
+ * Foundation.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with this 
+ * program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html 
+ * or from the Free Software Foundation, Inc., 
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ *
+ * Copyright 2006 - 2012 Pentaho Corporation.  All rights reserved.
+ *
+ */
 package org.pentaho.platform.plugin.kettle;
 
 import java.io.ByteArrayInputStream;
@@ -217,7 +234,10 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         // try loading from internal repository before falling back onto kettle
         // the repository passed here is not used to load the transformation it is used
         // to populate available databases, etc in "standard" kettle fashion
-        transMeta = createTransMetaJCR(repository);
+    	  try {
+    	    transMeta = createTransMetaJCR(repository);
+    	  } catch (Throwable t) {
+    	  }
 
         if (transMeta == null) {
           transMeta = createTransMeta(repository, logWriter);
@@ -232,8 +252,11 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         // try loading from internal repository before falling back onto kettle
         // the repository passed here is not used to load the job it is used
         // to populate available databases, etc in "standard" kettle fashion
-        jobMeta = createJobMetaJCR(repository);
-
+    	  try {
+    	    jobMeta = createJobMetaJCR(repository);
+    	  } catch (Throwable t) {
+    	  }
+    	  
         if (jobMeta == null) {
           jobMeta = createJobMeta(repository, logWriter);
         }
