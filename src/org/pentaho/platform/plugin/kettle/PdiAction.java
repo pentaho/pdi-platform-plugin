@@ -489,6 +489,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         localTrans = new Trans(transMeta);
 
         String carteObjectId = UUID.randomUUID().toString();
+        localTrans.setContainerObjectId(carteObjectId);
         CarteSingleton
             .getInstance()
             .getTransformationMap()
@@ -703,6 +704,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         localJob = new Job(repository, jobMeta);
 
         String carteObjectId = UUID.randomUUID().toString();
+        localJob.setContainerObjectId(carteObjectId);
         CarteSingleton.getInstance().getJobMap()
             .addJob(getJobName(carteObjectId), carteObjectId, localJob, new JobConfiguration(localJob.getJobMeta(), jobExConfig));
 
