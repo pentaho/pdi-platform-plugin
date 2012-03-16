@@ -56,6 +56,7 @@ import org.pentaho.di.job.JobMeta;
 import org.pentaho.di.repository.RepositoriesMeta;
 import org.pentaho.di.repository.Repository;
 import org.pentaho.di.repository.RepositoryMeta;
+import org.pentaho.di.repository.StringObjectId;
 import org.pentaho.di.trans.RowProducer;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransConfiguration;
@@ -312,23 +313,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
 
       IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, null);
       RepositoryFile transFile = unifiedRepository.getFile(idTopath(transformation));
-
-      SimpleRepositoryFileData fileData = unifiedRepository.getDataForRead(transFile.getId(), SimpleRepositoryFileData.class);
-      InputStream inputStream = fileData.getStream();
-      Document doc = XMLHandler.loadXMLFile(inputStream);
-
-      if (doc != null) {
-        Node transnode = XMLHandler.getSubNode(doc, TransMeta.XML_TAG); //$NON-NLS-1$
-
-        if (transnode == null) {
-          throw new ActionExecutionException();
-        }
-
-        // Load from this node...
-        transMeta.loadXML(transnode, repository, true, transMeta, null);
-      } else {
-        throw new ActionExecutionException();
-      }
+      transMeta = repository.loadTransformation(new StringObjectId((String) transFile.getId()), null);
     } catch (Throwable e) {
       throw new ActionExecutionException(org.pentaho.platform.plugin.kettle.messages.Messages.getInstance().getErrorString(
           "PdiAction.ERROR_0006_FAILED_TRANSMETA_CREATION", directory, transformation), e); //$NON-NLS-1$
@@ -378,24 +363,8 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     try {
 
       IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, null);
-      RepositoryFile transFile = unifiedRepository.getFile(idTopath(transformation));
-
-      SimpleRepositoryFileData fileData = unifiedRepository.getDataForRead(transFile.getId(), SimpleRepositoryFileData.class);
-      InputStream inputStream = fileData.getStream();
-      Document doc = XMLHandler.loadXMLFile(inputStream);
-
-      if (doc != null) {
-        Node jobNode = XMLHandler.getSubNode(doc, JobMeta.XML_TAG); //$NON-NLS-1$
-
-        if (jobNode == null) {
-          throw new ActionExecutionException();
-        }
-
-        // Load from this node...
-        jobMeta.loadXML(jobNode, repository, false, null);
-      } else {
-        throw new ActionExecutionException();
-      }
+      RepositoryFile jobFile = unifiedRepository.getFile(idTopath(job));
+      jobMeta = repository.loadJob(new StringObjectId((String) jobFile.getId()), null);
     } catch (Throwable e) {
       throw new ActionExecutionException(org.pentaho.platform.plugin.kettle.messages.Messages.getInstance().getErrorString(
           "PdiAction.ERROR_0006_FAILED_TRANSMETA_CREATION", directory, transformation), e); //$NON-NLS-1$
@@ -761,10 +730,6 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
    */
   protected Repository connectToRepository(final LogWriter logWriter) throws KettleSecurityException, KettleException, ActionExecutionException {
 
-    if (StringUtils.isEmpty(repositoryName)) {
-      return null;
-    }
-
     if (log.isDebugEnabled())
       log.debug(Messages.getInstance().getString("Kettle.DEBUG_META_REPOSITORY")); //$NON-NLS-1$
 
@@ -790,13 +755,13 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         // transformations or jobs from anywhere but the local server.
 
         String repositoriesXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><repositories>" //$NON-NLS-1$
-            + "<repository><id>PentahoEnterpriseRepository</id>" //$NON-NLS-1$
-            + "<name>" + SINGLE_DI_SERVER_INSTANCE + "</name>" //$NON-NLS-1$ //$NON-NLS-2$
-            + "<description>" + SINGLE_DI_SERVER_INSTANCE + "</description>" //$NON-NLS-1$ //$NON-NLS-2$
-            + "<repository_location_url></repository_location_url>" //$NON-NLS-1$
-            + "<version_comment_mandatory>N</version_comment_mandatory>" //$NON-NLS-1$
-            + "</repository>" //$NON-NLS-1$
-            + "</repositories>"; //$NON-NLS-1$
+          + "<repository><id>PentahoEnterpriseRepository</id>" //$NON-NLS-1$
+          + "<name>" + SINGLE_DI_SERVER_INSTANCE + "</name>" //$NON-NLS-1$ //$NON-NLS-2$
+          + "<description>" + SINGLE_DI_SERVER_INSTANCE + "</description>" //$NON-NLS-1$ //$NON-NLS-2$
+          + "<repository_location_url>" + PentahoSystem.getApplicationContext().getFullyQualifiedServerURL() + "</repository_location_url>" //$NON-NLS-1$ //$NON-NLS-2$
+          + "<version_comment_mandatory>N</version_comment_mandatory>" //$NON-NLS-1$
+          + "</repository>" //$NON-NLS-1$
+          + "</repositories>"; //$NON-NLS-1$
 
         ByteArrayInputStream sbis = new ByteArrayInputStream(repositoriesXml.getBytes("UTF8"));
         repositoriesMeta.readDataFromInputStream(sbis);
@@ -848,7 +813,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     // Two scenarios here: internal to server or external to server. If internal, you are already authenticated. If
     // external, you must provide a username and additionally specify that the IP address of the machine running this
     // code is trusted.
-    repository.connect(PentahoSessionHolder.getSession().getName(), null);
+    repository.connect(PentahoSessionHolder.getSession().getName(), "password");
 
     // OK, the repository is open and ready to use.
     if (log.isDebugEnabled())
