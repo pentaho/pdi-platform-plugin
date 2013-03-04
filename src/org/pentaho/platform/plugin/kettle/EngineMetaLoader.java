@@ -22,7 +22,7 @@ import java.text.MessageFormat;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.pentaho.di.core.exception.KettleXMLException;
+import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.job.JobMeta;
 import org.pentaho.di.repository.RepositoriesMeta;
 import org.pentaho.di.repository.Repository;
@@ -107,7 +107,7 @@ public class EngineMetaLoader {
         } else {
           meta = (T)new JobMeta(directoryName + "/" + fileName, repository); //$NON-NLS-1$
         }
-      } catch (KettleXMLException e) {
+      } catch (KettleException e) {
         if (log.isDebugEnabled()) {
           log.debug(MessageFormat.format(
               "Using the old Repository API, failed to open file: {0}/{1} in repository: {2}", directoryName, //$NON-NLS-1$

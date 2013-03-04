@@ -19,13 +19,11 @@ package org.pentaho.platform.plugin.kettle;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.commons.connection.IPentahoResultSet;
@@ -36,9 +34,9 @@ import org.pentaho.di.core.exception.KettleSecurityException;
 import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.exception.KettleValueException;
 import org.pentaho.di.core.logging.CentralLogStore;
-import org.pentaho.di.core.logging.Log4jBufferAppender;
 import org.pentaho.di.core.logging.LogLevel;
 import org.pentaho.di.core.logging.LogWriter;
+import org.pentaho.di.core.logging.LoggingBuffer;
 import org.pentaho.di.core.parameters.NamedParams;
 import org.pentaho.di.core.parameters.UnknownParamException;
 import org.pentaho.di.core.plugins.PluginRegistry;
@@ -47,7 +45,6 @@ import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.core.variables.VariableSpace;
-import org.pentaho.di.core.xml.XMLHandler;
 import org.pentaho.di.core.xml.XMLHandlerCache;
 import org.pentaho.di.job.Job;
 import org.pentaho.di.job.JobConfiguration;
@@ -72,13 +69,10 @@ import org.pentaho.platform.api.engine.ActionExecutionException;
 import org.pentaho.platform.api.engine.ActionValidationException;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
-import org.pentaho.platform.api.repository2.unified.data.simple.SimpleRepositoryFileData;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.plugin.action.kettle.KettleSystemListener;
 import org.pentaho.platform.plugin.action.messages.Messages;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
 
 /**
  * An adaptation of KettleComponent to the lightweight PojoComponent/IAction framework
@@ -111,8 +105,6 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
 
   private static final String SINGLE_DI_SERVER_INSTANCE = "singleDiServerInstance";
 
-  private static final long serialVersionUID = 8217343898202366129L;
-
   private MemoryResultSet transformationOutputRows;
 
   private IPentahoResultSet injectorRows;
@@ -138,7 +130,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
   /** The name of the repository to use */
   private String repositoryName;
 
-  private Log4jBufferAppender pdiUserAppender;
+  private LoggingBuffer pdiUserAppender;
 
   private RowProducer rowInjector = null;
 
@@ -229,7 +221,8 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
 
     pdiUserAppender = CentralLogStore.getAppender();
     Repository repository = connectToRepository(logWriter);
-    logWriter.addAppender(pdiUserAppender);
+    LoggingBufferAppender loggingBufferAppender = new LoggingBufferAppender(pdiUserAppender);
+    logWriter.addAppender(loggingBufferAppender);
     try {
       if (transformation != null) {
         // try loading from internal repository before falling back onto kettle
@@ -268,7 +261,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         executeJob(jobMeta, repository, logWriter);
       }
     } finally {
-      logWriter.removeAppender(pdiUserAppender);
+      logWriter.removeAppender(loggingBufferAppender);
       if (repository != null) {
         if (log.isDebugEnabled())
           log.debug(Messages.getInstance().getString("Kettle.DEBUG_DISCONNECTING")); //$NON-NLS-1$
@@ -734,11 +727,6 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
       log.debug(Messages.getInstance().getString("Kettle.DEBUG_META_REPOSITORY")); //$NON-NLS-1$
 
     RepositoriesMeta repositoriesMeta = new RepositoriesMeta();
-    if (repositoriesMeta == null) {
-      if (log.isDebugEnabled())
-        log.debug(pdiUserAppender.getBuffer().toString());
-      throw new ActionExecutionException(Messages.getInstance().getErrorString("Kettle.ERROR_0007_BAD_META_REPOSITORY")); //$NON-NLS-1$
-    }
 
     if (log.isDebugEnabled())
       log.debug(Messages.getInstance().getString("Kettle.DEBUG_POPULATING_META")); //$NON-NLS-1$

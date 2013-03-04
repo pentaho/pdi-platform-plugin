@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.pentaho.platform.api.engine.IUserRoleListService;
+import org.pentaho.platform.api.mt.ITenant;
 
 @SuppressWarnings( { "nls", "unchecked" })
 public class StubUserRoleListService implements IUserRoleListService {
@@ -42,6 +43,30 @@ public class StubUserRoleListService implements IUserRoleListService {
 
   public List getRolesForUser(String userName) {
     return Arrays.asList("FL_GATOR", "FS_SEMINOLE");
+  }
+
+  @Override
+  public List<String> getAllRoles(ITenant arg0) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public List<String> getAllUsers(ITenant arg0) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public List<String> getRolesForUser(ITenant arg0, String arg1) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public List<String> getUsersInRole(ITenant arg0, String arg1) {
+    // TODO Auto-generated method stub
+    return null;
   }
 
 }
