@@ -5,8 +5,8 @@ import org.apache.log4j.Layout;
 import org.apache.log4j.spi.ErrorHandler;
 import org.apache.log4j.spi.Filter;
 import org.apache.log4j.spi.LoggingEvent;
+import org.pentaho.di.core.logging.DefaultLogLevel;
 import org.pentaho.di.core.logging.KettleLoggingEvent;
-import org.pentaho.di.core.logging.LogLevel;
 import org.pentaho.di.core.logging.LoggingBuffer;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
@@ -35,7 +35,7 @@ public class LoggingBufferAppender implements Appender {
 
   @Override
   public void doAppend(LoggingEvent event) {
-    KettleLoggingEvent kle = new KettleLoggingEvent(event.getMessage(), System.currentTimeMillis(), LogLevel.ROWLEVEL);
+    KettleLoggingEvent kle = new KettleLoggingEvent(event.getMessage(), System.currentTimeMillis(), DefaultLogLevel.getLogLevel());
     loggingBuffer.doAppend(kle);
   }
 
