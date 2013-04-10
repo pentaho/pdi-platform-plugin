@@ -206,7 +206,7 @@ public class PdiActionTest {
       action.execute();
     } catch (Exception ex) {
       ex.printStackTrace();
-      fail();
+      fail(ex.getMessage());
     }
 
     String status = action.getStatus();

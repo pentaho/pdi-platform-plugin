@@ -59,12 +59,17 @@ public class StubUserRoleListService implements IUserRoleListService {
 
   @Override
   public List<String> getRolesForUser(ITenant arg0, String arg1) {
+    return Arrays.asList("FL_GATOR", "FS_SEMINOLE");
+  }
+
+  @Override
+  public List<String> getUsersInRole(ITenant arg0, String arg1) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public List<String> getUsersInRole(ITenant arg0, String arg1) {
+  public List<String> getSystemRoles() {
     // TODO Auto-generated method stub
     return null;
   }

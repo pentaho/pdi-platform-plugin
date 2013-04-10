@@ -664,7 +664,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
 
       try {
         localJob = new Job(repository, jobMeta);
-
+        localJob.shareVariablesWith(jobMeta);
         String carteObjectId = UUID.randomUUID().toString();
         localJob.setContainerObjectId(carteObjectId);
         CarteSingleton.getInstance().getJobMap()
