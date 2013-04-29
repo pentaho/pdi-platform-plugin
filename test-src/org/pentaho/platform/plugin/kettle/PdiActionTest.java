@@ -48,6 +48,7 @@ import org.pentaho.platform.engine.security.SecurityHelper;
 import org.pentaho.platform.repository.solution.filebased.FileBasedSolutionRepository;
 import org.pentaho.platform.scheduler2.quartz.QuartzScheduler;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
+import org.springframework.security.userdetails.UserDetailsService;
 
 @SuppressWarnings( { "all" })
 public class PdiActionTest {
@@ -74,6 +75,7 @@ public class PdiActionTest {
 
     MicroPlatform mp = new MicroPlatform("test-src/solution");
     mp.define(IUserRoleListService.class, StubUserRoleListService.class);
+    mp.define(UserDetailsService.class, StubUserDetailService.class);
     mp.define(ISolutionRepository.class, FileBasedSolutionRepository.class);
     mp.start();
 

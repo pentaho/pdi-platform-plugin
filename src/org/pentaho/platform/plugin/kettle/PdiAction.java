@@ -33,7 +33,7 @@ import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleSecurityException;
 import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.exception.KettleValueException;
-import org.pentaho.di.core.logging.CentralLogStore;
+import org.pentaho.di.core.logging.KettleLogStore;
 import org.pentaho.di.core.logging.LogLevel;
 import org.pentaho.di.core.logging.LogWriter;
 import org.pentaho.di.core.logging.LoggingBuffer;
@@ -219,7 +219,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     // initialize environment variables
     KettleSystemListener.environmentInit(PentahoSessionHolder.getSession());
 
-    pdiUserAppender = CentralLogStore.getAppender();
+    pdiUserAppender = KettleLogStore.getAppender();
     Repository repository = connectToRepository(logWriter);
     LoggingBufferAppender loggingBufferAppender = new LoggingBufferAppender(pdiUserAppender);
     logWriter.addAppender(loggingBufferAppender);
