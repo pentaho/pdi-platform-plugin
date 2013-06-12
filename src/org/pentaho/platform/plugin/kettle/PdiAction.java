@@ -449,7 +449,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
 
       try {
         localTrans = new Trans(transMeta);
-
+        localTrans.shareVariablesWith(transMeta);
         String carteObjectId = UUID.randomUUID().toString();
         localTrans.setContainerObjectId(carteObjectId);
         CarteSingleton
