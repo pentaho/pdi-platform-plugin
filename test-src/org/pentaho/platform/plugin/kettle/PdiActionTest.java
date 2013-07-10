@@ -38,14 +38,12 @@ import org.pentaho.commons.connection.memory.MemoryResultSet;
 import org.pentaho.platform.api.engine.ActionExecutionException;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.IUserRoleListService;
-import org.pentaho.platform.api.repository.ISolutionRepository;
 import org.pentaho.platform.api.scheduler2.JobTrigger;
 import org.pentaho.platform.api.scheduler2.SchedulerException;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
 import org.pentaho.platform.engine.security.SecurityHelper;
-import org.pentaho.platform.repository.solution.filebased.FileBasedSolutionRepository;
 import org.pentaho.platform.scheduler2.quartz.QuartzScheduler;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 import org.springframework.security.userdetails.UserDetailsService;
@@ -76,7 +74,6 @@ public class PdiActionTest {
     MicroPlatform mp = new MicroPlatform("test-src/solution");
     mp.define(IUserRoleListService.class, StubUserRoleListService.class);
     mp.define(UserDetailsService.class, StubUserDetailService.class);
-    mp.define(ISolutionRepository.class, FileBasedSolutionRepository.class);
     mp.start();
 
     SecurityHelper.getInstance().becomeUser(TEST_USER);
