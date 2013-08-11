@@ -25,6 +25,9 @@
     	<dependency org="pentaho-kettle" name="kettle-core" rev="${dependency.kettle.revision}" changing="true"/>
     	<dependency org="pentaho-kettle" name="kettle5-log4j-plugin" rev="${dependency.kettle.revision}" changing="true"/>
 
+      <!-- 3rd Party -->
+      <dependency org="commons-collections" name="commons-collections" rev="3.2.1" changing="true"/>
+
         <!--  test dependencies -->
         <dependency org="pentaho" name="pentaho-platform-core-test" rev="${dependency.pentaho-platform.revision}"  changing="true" conf="test->default"/>
         <dependency org="junit" name="junit" rev="4.4" conf="test->default" />
