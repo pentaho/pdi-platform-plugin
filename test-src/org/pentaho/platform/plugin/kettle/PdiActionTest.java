@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,7 @@ import org.pentaho.commons.connection.IPentahoResultSet;
 import org.pentaho.commons.connection.memory.MemoryMetaData;
 import org.pentaho.commons.connection.memory.MemoryResultSet;
 import org.pentaho.platform.api.engine.ActionExecutionException;
+import org.pentaho.platform.api.engine.IAuthorizationPolicy;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.IUserRoleListService;
 import org.pentaho.platform.api.scheduler2.JobTrigger;
@@ -44,6 +46,7 @@ import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
 import org.pentaho.platform.engine.security.SecurityHelper;
+import org.pentaho.platform.plugin.kettle.security.policy.rolebased.actions.RepositoryExecuteAction;
 import org.pentaho.platform.scheduler2.quartz.QuartzScheduler;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 import org.springframework.security.userdetails.UserDetailsService;
@@ -74,6 +77,8 @@ public class PdiActionTest {
     MicroPlatform mp = new MicroPlatform("test-src/solution");
     mp.define(IUserRoleListService.class, StubUserRoleListService.class);
     mp.define(UserDetailsService.class, StubUserDetailService.class);
+    mp.defineInstance(IAuthorizationPolicy.class, new TestAuthorizationPolicy());
+    
     mp.start();
 
     SecurityHelper.getInstance().becomeUser(TEST_USER);
@@ -363,6 +368,43 @@ public class PdiActionTest {
     sleep(5);
   }
 
+
+  @Test
+  public void testKettleTransformationScheduleWithNoExecutePermision() throws SchedulerException, InterruptedException, PlatformInitializationException {
+    System.setProperty("java.naming.factory.initial", "org.osjava.sj.SimpleContextFactory"); //$NON-NLS-1$ //$NON-NLS-2$
+    System.setProperty("org.osjava.sj.root", "test-src/simple-jndi"); //$NON-NLS-1$ //$NON-NLS-2$
+    System.setProperty("org.osjava.sj.delimiter", "/"); //$NON-NLS-1$ //$NON-NLS-2$
+
+    IPentahoSession session = new StandaloneSession();
+    PentahoSessionHolder.setSession(session);
+    
+    scheduler = new QuartzScheduler();
+    scheduler.start();
+
+    MicroPlatform mp = new MicroPlatform("test-src/solution");
+    mp.define(IUserRoleListService.class, StubUserRoleListService.class);
+    mp.define(UserDetailsService.class, StubUserDetailService.class);
+    mp.defineInstance(IAuthorizationPolicy.class, new TestAuthorizationPolicyNoExecute());
+    
+    mp.start();
+
+    SecurityHelper.getInstance().becomeUser(TEST_USER);
+    jobParams = new HashMap<String, Serializable>();
+    
+    jobParams.put("directory", "test-src\\solution\\pdi\\");
+    jobParams.put("transformation", "sample2.ktr");
+    
+    
+    scheduler.createJob("testNameNoExecute", PdiAction.class, jobParams, JobTrigger.ONCE_NOW);
+    try {
+      scheduler.triggerNow("testNameNoExecute");
+      fail();
+    } catch (IllegalStateException ise) {
+      assertNotNull(ise);
+    }
+    sleep(5);
+  }
+
   @Test
   public void testNoSettings() {
     PdiAction component = new PdiAction();
@@ -401,5 +443,45 @@ public class PdiActionTest {
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
+  }
+  
+  public class TestAuthorizationPolicy implements IAuthorizationPolicy {
+
+    List<String> allowedActions = new ArrayList<String>();
+    @Override
+    public List<String> getAllowedActions(String arg0) {
+      // TODO Auto-generated method stub
+      allowedActions.add("org.pentaho.repository.read");
+      allowedActions.add("org.pentaho.repository.create");
+      return allowedActions;
+    }
+
+    @Override
+    public boolean isAllowed(String arg0) {
+      // TODO Auto-generated method stub
+      return true;
+    }
+    
+  }
+  
+  public class TestAuthorizationPolicyNoExecute implements IAuthorizationPolicy {
+
+    List<String> allowedActions = new ArrayList<String>();
+    @Override
+    public List<String> getAllowedActions(String arg0) {
+      // TODO Auto-generated method stub
+      allowedActions.add("org.pentaho.repository.read");
+      allowedActions.add("org.pentaho.repository.create");
+      return allowedActions;
+    }
+
+    @Override
+    public boolean isAllowed(String action) {
+      if(action != null && action.equals(RepositoryExecuteAction.NAME)) {
+        return false;
+      }
+      return true;
+    }
+    
   }
 }
