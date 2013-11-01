@@ -207,7 +207,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
    */
   public void execute() throws Exception {
 
-    IAuthorizationPolicy authorizationPolicy = PentahoSystem.get(IAuthorizationPolicy.class);
+    IAuthorizationPolicy authorizationPolicy = PentahoSystem.get(IAuthorizationPolicy.class, PentahoSessionHolder.getSession());
     
     if(!authorizationPolicy.isAllowed(RepositoryExecuteAction.NAME)) {
       throw new IllegalStateException(org.pentaho.platform.plugin.kettle.messages.Messages.getInstance().getErrorString(
