@@ -67,12 +67,14 @@ import org.pentaho.platform.api.action.ILoggingAction;
 import org.pentaho.platform.api.action.IVarArgsAction;
 import org.pentaho.platform.api.engine.ActionExecutionException;
 import org.pentaho.platform.api.engine.ActionValidationException;
+import org.pentaho.platform.api.engine.IAuthorizationPolicy;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.plugin.action.kettle.KettleSystemListener;
 import org.pentaho.platform.plugin.action.messages.Messages;
+import org.pentaho.platform.plugin.kettle.security.policy.rolebased.actions.RepositoryExecuteAction;
 
 /**
  * An adaptation of KettleComponent to the lightweight PojoComponent/IAction framework
@@ -205,6 +207,13 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
    */
   public void execute() throws Exception {
 
+    IAuthorizationPolicy authorizationPolicy = PentahoSystem.get(IAuthorizationPolicy.class, PentahoSessionHolder.getSession());
+    
+    if(!authorizationPolicy.isAllowed(RepositoryExecuteAction.NAME)) {
+      throw new IllegalStateException(org.pentaho.platform.plugin.kettle.messages.Messages.getInstance().getErrorString(
+          "PdiAction.ERROR_0010_NO_PERMISSION_TO_EXECUTE")); //$NON-NLS-1$      
+    }
+    
     if (log.isDebugEnabled()) {
       log.debug(Messages.getInstance().getString("Kettle.DEBUG_START")); //$NON-NLS-1$
     }
@@ -228,10 +237,10 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         // try loading from internal repository before falling back onto kettle
         // the repository passed here is not used to load the transformation it is used
         // to populate available databases, etc in "standard" kettle fashion
-    	  try {
-    	    transMeta = createTransMetaJCR(repository);
-    	  } catch (Throwable t) {
-    	  }
+        try {
+          transMeta = createTransMetaJCR(repository);
+        } catch (Throwable t) {
+        }
 
         if (transMeta == null) {
           transMeta = createTransMeta(repository, logWriter);
@@ -246,11 +255,11 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         // try loading from internal repository before falling back onto kettle
         // the repository passed here is not used to load the job it is used
         // to populate available databases, etc in "standard" kettle fashion
-    	  try {
-    	    jobMeta = createJobMetaJCR(repository);
-    	  } catch (Throwable t) {
-    	  }
-    	  
+        try {
+          jobMeta = createJobMetaJCR(repository);
+        } catch (Throwable t) {
+        }
+        
         if (jobMeta == null) {
           jobMeta = createJobMeta(repository, logWriter);
         }
