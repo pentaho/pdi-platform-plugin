@@ -7,6 +7,7 @@
    <static-paths>
      <!-- this translates to /pentaho/content/pdi-platform-plugin/resources/* -->
      <static-path url="/pdi-platform-plugin/resources" localFolder="resources"/>
+     <static-path url="/pdi-platform-plugin/viewer" localFolder="viewer"/>
    </static-paths>
 
     <menu-items/>
