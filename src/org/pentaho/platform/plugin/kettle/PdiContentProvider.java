@@ -15,6 +15,8 @@ import org.pentaho.di.job.JobMeta;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.util.IPdiContentProvider;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 
 public class PdiContentProvider implements IPdiContentProvider {
 
@@ -22,6 +24,10 @@ public class PdiContentProvider implements IPdiContentProvider {
 
   IUnifiedRepository unifiedRepository;
 
+  public PdiContentProvider() {
+    this.unifiedRepository = PentahoSystem.get( IUnifiedRepository.class, PentahoSessionHolder.getSession() );
+  }
+  
   public PdiContentProvider( IUnifiedRepository unifiedRepository ) {
     this.unifiedRepository = unifiedRepository;
   }

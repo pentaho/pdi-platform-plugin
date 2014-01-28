@@ -37,7 +37,7 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
   public void execute() throws Exception {
     // create the PDI component
     PdiAction pdiComponent = new PdiAction();
-    
+    //Test
     pdiComponent.setDirectory( FilenameUtils.getPathNoEndSeparator( repositoryFile.getPath() ) );
     
     // see if we are running a transformation or job
