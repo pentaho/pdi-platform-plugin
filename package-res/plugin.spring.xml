@@ -20,6 +20,13 @@
     <property name="resourceMap" ref="resource-replacement-map" />
   </bean>
 
+  <bean id="kjb.parameter" class="org.pentaho.platform.plugin.kettle.ParameterContentGenerator" scope="prototype"/>
+  <bean id="kjb.parameterUi" class="org.pentaho.platform.plugin.kettle.ParameterUIContentGenerator" scope="prototype">
+    <property name="viewerFilePath" value="reportviewer/report.html" />
+    <property name="pluginId" value="reporting" />
+    <property name="resourceMap" ref="resource-replacement-map" />
+  </bean>
+
   <bean id="kjb" class="org.pentaho.platform.plugin.kettle.PdiContentGenerator" scope="prototype"/>
   <bean id="kjb.viewer" class="org.pentaho.platform.plugin.kettle.PdiContentGenerator" scope="prototype"/>
   <bean id="kjb.backgroundExecution" class="org.pentaho.platform.plugin.kettle.PdiAction" scope="prototype"/>
