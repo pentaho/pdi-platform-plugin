@@ -19,6 +19,7 @@ package org.pentaho.platform.plugin.kettle;
 
 import java.io.OutputStream;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
@@ -36,15 +37,15 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
   public void execute() throws Exception {
     // create the PDI component
     PdiAction pdiComponent = new PdiAction();
-    
-    pdiComponent.setDirectory(repositoryFile.getPath());
+    //Test
+    pdiComponent.setDirectory( FilenameUtils.getPathNoEndSeparator( repositoryFile.getPath() ) );
     
     // see if we are running a transformation or job
     if( repositoryFile.getName().toLowerCase().endsWith( ".ktr" ) ) { //$NON-NLS-1$
-      pdiComponent.setTransformation(repositoryFile.getPath());
+      pdiComponent.setTransformation( FilenameUtils.getBaseName( repositoryFile.getPath() ) );
     }
     else if( repositoryFile.getName().toLowerCase().endsWith( ".kjb" ) ) { //$NON-NLS-1$
-      pdiComponent.setJob(repositoryFile.getPath());
+      pdiComponent.setJob( FilenameUtils.getBaseName( repositoryFile.getPath() ) );
     }
     
     // create a map of the inputs
