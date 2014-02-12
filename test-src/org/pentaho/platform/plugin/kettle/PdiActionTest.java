@@ -31,25 +31,42 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.pentaho.commons.connection.IPentahoResultSet;
 import org.pentaho.commons.connection.memory.MemoryMetaData;
 import org.pentaho.commons.connection.memory.MemoryResultSet;
+import org.pentaho.di.repository.filerep.KettleFileRepositoryMeta;
+import org.pentaho.di.repository.kdr.KettleDatabaseRepositoryMeta;
 import org.pentaho.platform.api.engine.ActionExecutionException;
 import org.pentaho.platform.api.engine.IAuthorizationPolicy;
+import org.pentaho.platform.api.engine.IPentahoDefinableObjectFactory.Scope;
 import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.api.engine.ISolutionEngine;
+import org.pentaho.platform.api.engine.ISystemSettings;
 import org.pentaho.platform.api.engine.IUserRoleListService;
+import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
+import org.pentaho.platform.api.scheduler2.IScheduler;
+import org.pentaho.platform.api.scheduler2.Job;
 import org.pentaho.platform.api.scheduler2.JobTrigger;
 import org.pentaho.platform.api.scheduler2.SchedulerException;
+import org.pentaho.platform.engine.core.system.PathBasedSystemSettings;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
 import org.pentaho.platform.engine.security.SecurityHelper;
+import org.pentaho.platform.engine.services.solution.SolutionEngine;
+import org.pentaho.platform.plugin.boot.PentahoBoot;
 import org.pentaho.platform.plugin.kettle.security.policy.rolebased.actions.RepositoryExecuteAction;
+import org.pentaho.platform.repository2.unified.DefaultUnifiedRepository;
+import org.pentaho.platform.repository2.unified.fs.FileSystemBackedUnifiedRepository;
 import org.pentaho.platform.scheduler2.quartz.QuartzScheduler;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 import org.springframework.security.userdetails.UserDetailsService;
+import org.springframework.util.Assert;
 
 @SuppressWarnings( { "all" })
 public class PdiActionTest {
@@ -68,6 +85,8 @@ public class PdiActionTest {
     System.setProperty("org.osjava.sj.root", "test-src/simple-jndi"); //$NON-NLS-1$ //$NON-NLS-2$
     System.setProperty("org.osjava.sj.delimiter", "/"); //$NON-NLS-1$ //$NON-NLS-2$
 
+    System.setProperty("PENTAHO_SYS_CFG_PATH", new File( "test-src/solution/pentaho.xml" ).getAbsolutePath() ); //$NON-NLS-1$ //$NON-NLS-2$
+    
     IPentahoSession session = new StandaloneSession();
     PentahoSessionHolder.setSession(session);
     
@@ -78,7 +97,15 @@ public class PdiActionTest {
     mp.define(IUserRoleListService.class, StubUserRoleListService.class);
     mp.define(UserDetailsService.class, StubUserDetailService.class);
     mp.defineInstance(IAuthorizationPolicy.class, new TestAuthorizationPolicy());
+    mp.setSettingsProvider( new PathBasedSystemSettings() );
+    mp.defineInstance(IScheduler.class, scheduler );
     
+    mp.define( ISolutionEngine.class, SolutionEngine.class );    
+    mp.define( IUnifiedRepository.class, FileSystemBackedUnifiedRepository.class, Scope.GLOBAL );
+    FileSystemBackedUnifiedRepository repo = (FileSystemBackedUnifiedRepository) PentahoSystem.get( IUnifiedRepository.class );
+    File root = new File( "test-src/solution" );
+    repo.setRootDir( root );
+
     mp.start();
 
     SecurityHelper.getInstance().becomeUser(TEST_USER);
@@ -88,6 +115,7 @@ public class PdiActionTest {
   @Test(expected=Exception.class)
   public void testValidatation() throws Exception {
     PdiAction action = new PdiAction();
+    action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     action.execute();
   }
   
@@ -97,6 +125,7 @@ public class PdiActionTest {
     variables.put("customVariable", "customVariableValue");
 
     PdiAction action = new PdiAction();
+    action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     action.setArguments(new String[] { "dummyArg" } );
     action.setVariables(variables);
     
@@ -104,9 +133,8 @@ public class PdiActionTest {
     Map<String, String> overrideParams = new HashMap<String, String>();
     overrideParams.put("param2", "12");
     action.setParameters(overrideParams);
-    
-    action.setDirectory("test-src\\solution\\pdi\\");
-    action.setTransformation("testTransformationVariableOverrides.ktr");
+    action.setDirectory("test-src/solution");
+    action.setTransformation("pdi/testTransformationVariableOverrides");
 
     action.execute();
     
@@ -127,17 +155,11 @@ public class PdiActionTest {
   @Test
   public void testLoadingFromVariousPaths() throws Exception {
     PdiAction action = new PdiAction();
+    action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     action.setArguments(new String[] { "dummyArg" } );
     
-    action.setDirectory("test-src\\solution\\pdi\\");
-    action.setTransformation("testTransformationVariableOverrides.ktr");
-
-    action.execute();
-    
-    File ktrFile = new File("test-src/solution/pdi/testTransformationVariableOverrides.ktr");
-    assertTrue(ktrFile.exists());
-    action.setDirectory(ktrFile.getParent());
-    action.setTransformation(ktrFile.getName());
+    action.setDirectory("test-src/solution");
+    action.setTransformation("pdi/testTransformationVariableOverrides");
 
     action.execute();
   }
@@ -145,6 +167,7 @@ public class PdiActionTest {
   @Test(expected=ActionExecutionException.class)
   public void testBadFileThrowsException() throws Exception {
     PdiAction action = new PdiAction();
+    action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     action.setArguments(new String[] { "dummyArg" } );
     
     action.setDirectory("/dne");
@@ -159,13 +182,14 @@ public class PdiActionTest {
     args.put("parameterKey", "parameterValue");
 
     PdiAction action = new PdiAction();
+    action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     action.setVarArgs(args);
     
     File ktr = new File("test-src/solution/pdi/sample2.ktr");
     assertTrue(ktr.exists());
 
-    action.setDirectory(ktr.getParent());
-    action.setTransformation(ktr.getName());
+    action.setDirectory("test-src/solution");
+    action.setTransformation("pdi/sample2");
 
     action.execute();
 
@@ -199,10 +223,11 @@ public class PdiActionTest {
 
   @Test
   public void testTransformationPaths() {
-    String dir = "test-src\\solution\\pdi\\";
-    String ktr = "sample2.ktr";
+    String dir = "test-src/solution";
+    String ktr = "pdi/sample2";
 
     PdiAction action = new PdiAction();
+    action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     action.setDirectory(dir);
     action.setTransformation(ktr);
 
@@ -242,12 +267,14 @@ public class PdiActionTest {
 
   @Test
   public void testJobPaths() throws Exception {
-    String dir = "test-src/solution/pdi";
-    String kjb = "ETLJob1.kjb";
+    
+    File kjb = new File( "test-src/solution/pdi/ETLJob1.kjb" );
+    assertTrue( kjb.exists() );
 
     PdiAction component = new PdiAction();
-    component.setDirectory(dir);
-    component.setJob(kjb);
+    component.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
+    component.setDirectory( "test-src/solution" );
+    component.setJob( "pdi/ETLJob1" );
 
     component.execute();
     //if no exception then the test passes
@@ -256,12 +283,13 @@ public class PdiActionTest {
   @Test
   public void testTransformationMonitor() {
     PdiAction action = new PdiAction();
+    action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     
     File ktr = new File("test-src/solution/pdi/sample2.ktr");
     assertTrue(ktr.exists());
     
-    action.setDirectory(ktr.getParent());
-    action.setTransformation(ktr.getName());
+    action.setDirectory( "test-src/solution" );
+    action.setTransformation( "pdi/sample2" );
 
     action.setMonitorStep("XML Output");
 
@@ -305,14 +333,15 @@ public class PdiActionTest {
   @Test
   public void testTransformationInjector() throws Exception {
     PdiAction component = new PdiAction();
+    component.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     IPentahoSession session = new StandaloneSession();
     PentahoSessionHolder.setSession(session);
     
     File ktr = new File("test-src/solution/pdi/sample3.ktr");
     assertTrue(ktr.exists());
 
-    component.setDirectory(ktr.getParent());
-    component.setTransformation(ktr.getName());
+    component.setDirectory( "test-src/solution" );
+    component.setTransformation( "pdi/sample3" );
 
     String[][] columnNames = { { "REGION", "DEPARTMENT", "POSITIONTITLE" } };
     MemoryMetaData metadata = new MemoryMetaData(columnNames, null);
@@ -362,7 +391,7 @@ public class PdiActionTest {
   
   @Test
   public void testKettleTransformationSchedule() throws SchedulerException, InterruptedException {
-    jobParams.put("directory", "test-src\\solution\\pdi\\");
+    jobParams.put("directory", "test-src/solution/pdi");
     jobParams.put("transformation", "sample2.ktr");
     scheduler.createJob("testName", PdiAction.class, jobParams, JobTrigger.ONCE_NOW);
     sleep(5);
@@ -385,22 +414,27 @@ public class PdiActionTest {
     mp.define(IUserRoleListService.class, StubUserRoleListService.class);
     mp.define(UserDetailsService.class, StubUserDetailService.class);
     mp.defineInstance(IAuthorizationPolicy.class, new TestAuthorizationPolicyNoExecute());
+    mp.defineInstance(IScheduler.class, scheduler );
+    
+    mp.define( ISolutionEngine.class, SolutionEngine.class );    
+    mp.define( IUnifiedRepository.class, FileSystemBackedUnifiedRepository.class, Scope.GLOBAL );
+    FileSystemBackedUnifiedRepository repo = (FileSystemBackedUnifiedRepository) PentahoSystem.get( IUnifiedRepository.class );
+    repo.setRootDir( new File( "test-src/solution" ) );
     
     mp.start();
 
     SecurityHelper.getInstance().becomeUser(TEST_USER);
     jobParams = new HashMap<String, Serializable>();
     
-    jobParams.put("directory", "test-src\\solution\\pdi\\");
+    jobParams.put("directory", "/pdi");
     jobParams.put("transformation", "sample2.ktr");
     
-    
-    scheduler.createJob("testNameNoExecute", PdiAction.class, jobParams, JobTrigger.ONCE_NOW);
     try {
-      scheduler.triggerNow("testNameNoExecute");
-      fail();
-    } catch (IllegalStateException ise) {
-      assertNotNull(ise);
+      Job job = scheduler.createJob("testNameNoExecute", PdiAction.class, jobParams, JobTrigger.ONCE_NOW);
+      Assert.notNull( job );
+      scheduler.triggerNow(job.getJobId());
+    } catch (Exception e) {
+      assertNotNull(e);
     }
     sleep(5);
   }
@@ -408,6 +442,7 @@ public class PdiActionTest {
   @Test
   public void testNoSettings() {
     PdiAction component = new PdiAction();
+    component.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     try {
       component.validate();
       fail();
@@ -418,6 +453,7 @@ public class PdiActionTest {
   @Test
   public void testBadSolutionTransformation() {
     PdiAction component = new PdiAction();
+    component.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     component.setTransformation("bogus.ktr");
     try {
       component.validate();
@@ -429,6 +465,7 @@ public class PdiActionTest {
   @Test
   public void testBadSolutionJob() {
     PdiAction component = new PdiAction();
+    component.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     component.setJob("bogus.kjb");
     try {
       component.validate();
