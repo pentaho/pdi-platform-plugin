@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<repositories>
+
+  <!-- This is a filesystem-based repository; used in PdiActionTest class for conducting its tests using /test-src/solution/pdi/*.ktr -->
+
+  <repository>
+	<id>KettleFileRepository</id>
+	<name>KettleFileRepository</name>
+	<description>KettleFileRepository</description>
+	<classname>org.pentaho.di.repository.filerep.KettleFileRepository</classname>
+	<meta-classname>org.pentaho.di.repository.filerepKettleFileRepositoryMeta</meta-classname>
+	<base_directory>test-src/solution</base_directory>
+  </repository> 
+
+</repositories>
