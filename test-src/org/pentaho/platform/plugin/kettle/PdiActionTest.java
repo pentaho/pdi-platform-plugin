@@ -473,6 +473,51 @@ public class PdiActionTest {
     } catch (Exception ex) {
     }
   }
+  
+  @Test
+  public void testJobParameterPassing() throws Exception {
+    
+	// this job will pass these parameters to its underlying transformation
+	// the transformation will simply add 'firstName' and 'lastName' into a 'fullName'
+	  
+	final int RESULT_OK = 0;
+	final String STATUS_FINISHED = "Finished";
+	  
+    File kjb = new File( "test-src/solution/pdi/parameter-passing/kjbparams.kjb" );
+    assertTrue( kjb.exists() );
+
+    PdiAction component = new PdiAction();
+    component.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
+    component.setDirectory( "test-src/solution" );
+    component.setJob( "pdi/parameter-passing/kjbparams" );
+    
+    Map<String, String> params = new HashMap<String, String>();
+    params.put("firstName" , "John");
+    params.put("lastName" , "Doe");
+    
+    component.setParameters(params);
+
+    component.execute();
+    
+    // 1) check if job execution is successful
+    assertEquals( RESULT_OK, component.getResult() );
+    assertEquals( STATUS_FINISHED, component.getStatus() );
+    
+    // 2) log scraping: check what the ktr's calculation was for ${first} + ${last} = ${fullName}
+    String logScraping = component.getLog().substring( 
+    		component.getLog().indexOf("${first} + ${last} = ${fullName}") , 
+    		component.getLog().indexOf("====================") );
+    
+    if ( logScraping != null && logScraping.contains( "fullName =" ) ){
+    	logScraping = logScraping.substring( logScraping.indexOf( "fullName =" ) );
+    	logScraping = logScraping.substring( 0, logScraping.indexOf( "\n") );
+    	String fullName = logScraping.replace( "fullName =", "").trim();
+    	
+    	assertEquals(fullName.trim(), "JohnDoe");
+    }    
+    
+    // 3) if no exception then the test passes
+  }
 
   private void sleep(int seconds) {
     try {
