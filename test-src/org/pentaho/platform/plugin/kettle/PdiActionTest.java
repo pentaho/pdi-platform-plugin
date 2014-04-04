@@ -38,8 +38,14 @@ import org.junit.Test;
 import org.pentaho.commons.connection.IPentahoResultSet;
 import org.pentaho.commons.connection.memory.MemoryMetaData;
 import org.pentaho.commons.connection.memory.MemoryResultSet;
+import org.pentaho.di.core.CheckResultInterface;
+import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.exception.KettleMissingPluginsException;
+import org.pentaho.di.core.exception.KettleXMLException;
+import org.pentaho.di.job.JobMeta;
 import org.pentaho.di.repository.filerep.KettleFileRepositoryMeta;
 import org.pentaho.di.repository.kdr.KettleDatabaseRepositoryMeta;
+import org.pentaho.di.trans.TransMeta;
 import org.pentaho.platform.api.engine.ActionExecutionException;
 import org.pentaho.platform.api.engine.IAuthorizationPolicy;
 import org.pentaho.platform.api.engine.IPentahoDefinableObjectFactory.Scope;
@@ -525,7 +531,7 @@ public class PdiActionTest {
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
-  }
+  }  
   
   public class TestAuthorizationPolicy implements IAuthorizationPolicy {
 
@@ -565,5 +571,52 @@ public class PdiActionTest {
       return true;
     }
     
+  }
+  
+  @Test
+  public void testKtrIsValid(){
+	  
+	TransMeta meta = null;
+	
+	try {
+		meta = new TransMeta( "test-src/solution/pdi/testTransformationVariableOverrides.ktr" );
+		
+	} catch (KettleException ke) {
+		fail( ke.getMessage() );
+	}
+	
+	List<CheckResultInterface> remarks = new ArrayList<CheckResultInterface>();
+	meta.checkSteps( remarks, false, null );
+	        
+	assertTrue( remarks != null && isValidationOK( remarks ) ); 
+  }
+  
+  @Test
+  public void testKjbIsValid(){
+	  
+	JobMeta meta = null;
+	
+	try {
+		meta = new JobMeta( "test-src/solution/pdi/ETLJob1.kjb", null );
+		
+	} catch (KettleException ke) {
+		fail( ke.getMessage() );
+	}
+	
+	List<CheckResultInterface> remarks = new ArrayList<CheckResultInterface>();
+	meta.checkJobEntries( remarks, false , null );
+	
+	assertTrue( remarks != null && isValidationOK( remarks ) ); 
+  }
+
+  private boolean isValidationOK( List<CheckResultInterface> remarks ){
+	  
+	  for( CheckResultInterface result : remarks ){
+		  if( CheckResultInterface.TYPE_RESULT_ERROR == result.getType() ){
+			  return false;
+		  }
+	  }
+	  
+	  return true;
   }
 }
