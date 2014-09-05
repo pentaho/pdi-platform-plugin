@@ -43,9 +43,5 @@
   </bean>
 
   <util:map id="resource-replacement-map">
-        <entry key="reportviewer/reportviewer-prompt" value="viewer/viewer-prompt"/> 
-        <entry key="reportviewer/reportviewer-logging" value="viewer/viewer-logging"/>
-        <entry key="reportviewer/reportviewer-app" value="../pdi-platform-plugin/viewer/viewer-app"/>
-        <entry key="reportviewer/reportviewer" value="viewer/viewer"/>
   </util:map>
 </beans>
