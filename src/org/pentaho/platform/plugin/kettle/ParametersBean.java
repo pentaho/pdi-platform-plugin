@@ -5,12 +5,6 @@
  */
 package org.pentaho.platform.plugin.kettle;
 
-import java.io.IOException;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -19,18 +13,31 @@ import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 public class ParametersBean {
 
   private Log log = LogFactory.getLog( ParametersBean.class );
 
   private static final String PARAMETER_CORE_NAMESPACE =
-      "http://pentaho.pdi.plugin/namespaces/engine/parameter-attributes/core";
+      "http://reporting.pentaho.org/namespaces/engine/parameter-attributes/core";
 
   private String[] userParams;
   private Document document;
+  private Map<String, String> requestParams = new HashMap<String, String>();
 
   public ParametersBean( String[] userParams ) {
     this.userParams = userParams;
+  }
+
+  public ParametersBean( String[] userParams , Map<String, String> requestParams ) {
+    this.userParams = userParams;
+    this.requestParams = requestParams != null ? requestParams : new HashMap<String, String>();
   }
 
   public String getParametersXmlString() throws ParserConfigurationException, TransformerException, IOException {
@@ -40,7 +47,8 @@ public class ParametersBean {
     parameters = setRootLevelSystemAttributes( parameters );
 
     // access the ktr/kjb file and identify if there are any user input parameters
-    parameters = createUserParameters( parameters );
+    parameters = createUserParameters( parameters , requestParams );
+    parameters = createSystemRequiredParameters( parameters );
 
     document.appendChild( parameters );
     StringBuffer buffer = XmlDom4JHelper.docToString( document );
@@ -49,11 +57,11 @@ public class ParametersBean {
 
   private Element setRootLevelSystemAttributes( Element rootElement ) throws DOMException {
 
-    rootElement.setAttribute( "autoSubmit", Boolean.toString( false ) );
-    rootElement.setAttribute( "autoSubmitUI", Boolean.toString( false ) );
-    rootElement.setAttribute( "is-prompt-needed", Boolean.toString( false ) );
+    rootElement.setAttribute( "autoSubmit", "true" );
+    rootElement.setAttribute( "autoSubmitUI", "true" );
     rootElement.setAttribute( "accepted-page", "-1" );
-    rootElement.setAttribute( "page-count", "0" );
+    rootElement.setAttribute( "is-mandatory", "false" );
+    rootElement.setAttribute( "is-prompt-needed", "false" );
 
     return rootElement;
   }
@@ -78,21 +86,17 @@ public class ParametersBean {
     element.setAttribute( "is-mandatory", "false" ); //$NON-NLS-1$ //$NON-NLS-2$
     element.setAttribute( "is-multi-select", "false" ); //$NON-NLS-1$ //$NON-NLS-2$
     element.setAttribute( "is-strict", "false" ); //$NON-NLS-1$ //$NON-NLS-2$
-    element.setAttribute( "autoSubmit", Boolean.toString( false ) ); //$NON-NLS-1$
-    element.setAttribute( "autoSubmitUI", Boolean.toString( false ) ); //$NON-NLS-1$
-    element.setAttribute( "is-prompt-needed", Boolean.toString( false ) ); //$NON-NLS-1$
     element.setAttribute( "name", name ); //$NON-NLS-1$
     element.setAttribute( "type", StringUtils.isEmpty( type ) ? defaultType : type ); //$NON-NLS-1$
 
-    element.appendChild( createAttribute( "autoSubmit", Boolean.toString( false ) ) ); //$NON-NLS-1$
-    element.appendChild( createAttribute( "autoSubmitUI", Boolean.toString( false ) ) ); //$NON-NLS-1$
-    element.appendChild( createAttribute( "is-prompt-needed", Boolean.toString( false ) ) ); //$NON-NLS-1$
-    element.appendChild( createAttribute( "hidden", Boolean.toString( hidden ) ) ); //$NON-NLS-1$
+    if( hidden ) {
+      element.appendChild( createAttribute( "hidden", "true" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+    }
 
     return element;
   }
 
-  private Element createUserParameters( Element parameters ) {
+  private Element createUserParameters( Element parameters, Map<String, String> paramMap ) {
 
     try {
 
@@ -100,9 +104,14 @@ public class ParametersBean {
 
         for ( String param : userParams ) {
 
-          Element element = createBaseElement( "parameter", param, null, true );
-          element.appendChild( createAttribute( "hidden", "false" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+          Element element = createBaseElement( "parameter", param, null, false );
+          element.appendChild( createAttribute( "role", "user" ) ); //$NON-NLS-1$ //$NON-NLS-2$
           element.appendChild( createAttribute( "label", param ) ); //$NON-NLS-1$ //$NON-NLS-2$
+
+          if ( paramMap.containsKey( param ) ) {
+            String value = paramMap.get( param );
+            element.appendChild( createValue( value, "java.lang.String", value ) );
+          }
 
           parameters.appendChild( element );
         }
@@ -112,6 +121,83 @@ public class ParametersBean {
       log.error( "", e );
     }
 
+    return parameters;
+  }
+
+  private Element createValue( String name, String type, String value ) {
+
+    Element valuesElem = document.createElement( "values" ); // NON-NLS
+
+    Element valueAttr = document.createElement( "value" ); // NON-NLS
+    valueAttr.setAttribute( "label", name ); // NON-NLS
+    valueAttr.setAttribute( "type", type ); // NON-NLS
+    valueAttr.setAttribute( "selected", "true" ); // NON-NLS
+    valueAttr.setAttribute( "null", "false" ); // NON-NLS
+    valueAttr.setAttribute( "value", value ); // NON-NLS
+
+    valuesElem.appendChild( valueAttr );
+
+    return valuesElem;
+  }
+
+  private Element createSystemRequiredParameters( Element parameters ) {
+
+    try {
+
+      // parameter 'accepted-page' is needed in pentaho-prompting.js ( if it doesn't exist we'll get a undefined error )
+      Element e1 = createBaseElement( "parameter", "accepted-page", "java.lang.Integer", true );
+      e1.appendChild( createAttribute( "role", "system" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e1.appendChild( createAttribute( "hidden", "true" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e1.appendChild( createAttribute( "preferred", "true" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e1.appendChild( createAttribute( "label", "accepted-page" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e1.appendChild( createAttribute( "parameter-group", "system" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e1.appendChild( createAttribute( "parameter-group-label", "System Parameters" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+
+      parameters.appendChild( e1 );
+
+      // parameter 'autoSubmit' used to disable automatic submit ( when filling out from )
+      Element e2 = createBaseElement( "parameter", "autoSubmit", "java.lang.Boolean", true );
+      e2.appendChild( createAttribute( "role", "system" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e2.appendChild( createAttribute( "preferred", "true" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e2.appendChild( createAttribute( "label", "autoSubmit" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e2.appendChild( createAttribute( "parameter-group", "system" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e2.appendChild( createAttribute( "parameter-group-label", "System Parameters" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e2.appendChild( createAttribute( "parameter-render-type", "textbox" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e2.appendChild( createAttribute( "deprecated", "true" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e2.appendChild( createValue( "true", "java.lang.Boolean", "true" ) ); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+
+      // parameter 'autoSubmitUI' used to disable automatic submit ( when filling out from )
+      Element e3 = createBaseElement( "parameter", "autoSubmitUI", "java.lang.Boolean", true );
+      e3.appendChild( createAttribute( "role", "system" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e3.appendChild( createAttribute( "preferred", "true" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e3.appendChild( createAttribute( "label", "autoSubmitUI" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e3.appendChild( createAttribute( "parameter-group", "system" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e3.appendChild( createAttribute( "parameter-group-label", "System Parameters" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e3.appendChild( createAttribute( "parameter-render-type", "textbox" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e3.appendChild( createAttribute( "deprecated", "true" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e3.appendChild( createValue( "true", "java.lang.Boolean", "true" ) ); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+
+      Element e4 = createBaseElement( "parameter", "showParameters", "java.lang.Boolean", true );
+      e4.appendChild( createAttribute( "role", "system" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e4.appendChild( createAttribute( "preferred", "true" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e4.appendChild( createAttribute( "label", "autoSubmitUI" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e4.appendChild( createAttribute( "parameter-group", "system" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e4.appendChild( createAttribute( "parameter-group-label", "System Parameters" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e4.appendChild( createAttribute( "parameter-render-type", "textbox" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e4.appendChild( createAttribute( "deprecated", "true" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      e4.appendChild( createValue( "true", "java.lang.Boolean", "true" ) ); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+
+
+
+      parameters.appendChild( e2 );
+      parameters.appendChild( e3 );
+      parameters.appendChild( e4 );
+
+
+
+    } catch ( Exception e ) {
+      log.error( "", e );
+    }
     return parameters;
   }
 

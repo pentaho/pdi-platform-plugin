@@ -1,8 +1,5 @@
 package org.pentaho.platform.plugin.kettle;
 
-import java.io.OutputStream;
-import java.net.URLDecoder;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -14,6 +11,12 @@ import org.pentaho.platform.api.util.IPdiContentProvider;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.services.solution.SimpleContentGenerator;
 import org.pentaho.util.messages.LocaleHelper;
+
+import java.io.OutputStream;
+import java.net.URLDecoder;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * ParameterContentGenerator returns the available parameters for a given ktr/kjb in XML format
@@ -53,7 +56,7 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
 
     String[] userParams = provider.getUserParameters( file.getPath() );
 
-    ParametersBean paramBean = new ParametersBean( userParams );
+    ParametersBean paramBean = new ParametersBean( userParams , requestParameterToStringMap( requestParams ) );
     String response = paramBean.getParametersXmlString();
 
     out.write( response.getBytes( LocaleHelper.getSystemEncoding() ) );
@@ -76,5 +79,25 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
       path = "/" + path;
     }
     return path;
+  }
+
+  private Map<String, String> requestParameterToStringMap( IParameterProvider requestParams ){
+
+    Map<String, String> paramMap = new HashMap<String, String>();
+
+    if( requestParams != null ){
+
+      Iterator<String> it = requestParams.getParameterNames();
+
+      while( it.hasNext() ){
+
+        String name = it.next();
+        String value = requestParams.hasParameter( name ) ? requestParams.getParameter( name ).toString() : "";
+
+        paramMap.put( name, value );
+      }
+    }
+
+    return paramMap;
   }
 }
