@@ -23,7 +23,9 @@
 
     	<dependency org="pentaho-kettle" name="kettle-engine" rev="${dependency.kettle.revision}" changing="true"/>
     	<dependency org="pentaho-kettle" name="kettle-core" rev="${dependency.kettle.revision}" changing="true"/>
-    	<dependency org="pentaho-kettle" name="kettle5-log4j-plugin" rev="${dependency.kettle.revision}" changing="true"/>
+        <dependency org="pentaho-kettle" name="kettle5-log4j-plugin" rev="${dependency.kettle.revision}" changing="true">
+          <artifact name="kettle5-log4j-plugin" type="jar" ext="jar"/>
+        </dependency>
 
         <!--  test dependencies -->
         <dependency org="pentaho" name="pentaho-platform-core-test" rev="${dependency.pentaho-platform.revision}"  changing="true" conf="test->default"/>
