@@ -519,7 +519,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         localTrans.setSafeModeEnabled( Boolean.valueOf( runSafeMode ) );
         localTrans.prepareExecution( transMeta.getArguments() );
       } catch ( Exception e ) {
-        // don't throw exception, because scheduler job will try to run this job again in this case
+        // don't throw exception, because the scheduler may try to run this transformation again
         log.error( Messages.getInstance().getErrorString( "Kettle.ERROR_0011_TRANSFORMATION_PREPARATION_FAILED" ),
             e ); //$NON-NLS-1$
         return;
@@ -768,10 +768,11 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         if ( log.isDebugEnabled() ) {
           log.debug( pdiUserAppender.getBuffer().toString() );
         }
-        throw new ActionExecutionException(
-          org.pentaho.platform.plugin.kettle.messages.Messages.getInstance().getErrorString(
-            "PdiAction.ERROR_0008_JOB_HAD_ERRORS", //$NON-NLS-1$ 
+        // don't throw exception, because the scheduler may try to run this job again
+        log.error( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance().getErrorString(
+            "PdiAction.ERROR_0008_JOB_HAD_ERRORS", //$NON-NLS-1$
             Integer.toString( jobErrors ), Long.toString( jobResultErrors ) ) );
+        return;
       }
 
       // Dump the Kettle log...
