@@ -30,6 +30,6 @@
         <!--  test dependencies -->
         <dependency org="pentaho" name="pentaho-platform-core-test" rev="${dependency.pentaho-platform.revision}"  changing="true" conf="test->default"/>
         <dependency org="junit" name="junit" rev="4.4" conf="test->default" />
-        <dependency org="hsqldb" name="hsqldb" rev="1.8.0" conf="test->default" transitive="false"/>
+        <dependency org="org.hsqldb" name="hsqldb" rev="2.3.2" conf="test->default" transitive="false"/>
      </dependencies>
 </ivy-module>
