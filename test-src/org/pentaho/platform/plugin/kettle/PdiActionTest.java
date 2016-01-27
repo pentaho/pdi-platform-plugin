@@ -77,7 +77,7 @@ public class PdiActionTest {
     System.setProperty( "org.osjava.sj.delimiter", "/" ); //$NON-NLS-1$ //$NON-NLS-2$
 
     System.setProperty( "PENTAHO_SYS_CFG_PATH",
-      new File( "test-src/solution/pentaho.xml" ).getAbsolutePath() ); //$NON-NLS-1$ //$NON-NLS-2$
+        new File( "test-src/solution/pentaho.xml" ).getAbsolutePath() ); //$NON-NLS-1$
 
     IPentahoSession session = new StandaloneSession();
     PentahoSessionHolder.setSession( session );
@@ -95,7 +95,7 @@ public class PdiActionTest {
     mp.define( ISolutionEngine.class, SolutionEngine.class );
     mp.define( IUnifiedRepository.class, FileSystemBackedUnifiedRepository.class, Scope.GLOBAL );
     FileSystemBackedUnifiedRepository repo =
-      (FileSystemBackedUnifiedRepository) PentahoSystem.get( IUnifiedRepository.class );
+        (FileSystemBackedUnifiedRepository) PentahoSystem.get( IUnifiedRepository.class );
     File root = new File( "test-src/solution" );
     repo.setRootDir( root );
 
@@ -137,9 +137,9 @@ public class PdiActionTest {
     //generatedRow|cmdLineArg1|param1|param2|repositoryDirectory|customVariable
     String[] columnData = rowData.split( "\\|" );
     assertEquals( "param1 value is wrong (default value should be in effect)", "param1DefaultValue",
-      columnData[ 2 ].trim() );
+        columnData[ 2 ].trim() );
     assertEquals( "param2 value is wrong (overridden value should be in effect)", 12L,
-      Long.parseLong( columnData[ 3 ].trim() ) );
+        Long.parseLong( columnData[ 3 ].trim() ) );
 
     assertEquals( "The number of rows generated should have equaled the value of param2", 13, lines.size() );
 
@@ -203,14 +203,10 @@ public class PdiActionTest {
     assertNull( rows );
 
     String log = action.getLog();
-    assertTrue( log.indexOf( "QUADRANT_ACTUALS" ) != -1 );
-    assertTrue( log.indexOf( "R=148" ) != -1 );
-    assertTrue( log.indexOf( "Filter rows" ) != -1 );
-    assertTrue( log.indexOf( "R=148" ) != -1 );
-    assertTrue( log.indexOf( "Java Script Value" ) != -1 );
-    assertTrue( log.indexOf( "W=5" ) != -1 );
-    assertTrue( log.indexOf( "XML Output" ) != -1 );
-    assertTrue( log.indexOf( "O=5" ) != -1 );
+    assertTrue( log.indexOf( "QUADRANT_ACTUALS.0 - Finished processing (I=148, O=0, R=0, W=148, U=0, E=0)" ) != -1 );
+    assertTrue( log.indexOf( "Filter rows.0 - Finished processing (I=0, O=0, R=148, W=5, U=0, E=0)" ) != -1 );
+    assertTrue( log.indexOf( "Java Script Value.0 - Finished processing (I=0, O=0, R=5, W=5, U=0, E=0)" ) != -1 );
+    assertTrue( log.indexOf( "XML Output.0 - Finished processing (I=0, O=0, R=5, W=5, U=0, E=0)" ) != -1 );
     assertNotNull( log );
 
   }
@@ -248,14 +244,10 @@ public class PdiActionTest {
     assertNull( rows );
 
     String log = action.getLog();
-    assertTrue( log.indexOf( "QUADRANT_ACTUALS" ) != -1 );
-    assertTrue( log.indexOf( "R=148" ) != -1 );
-    assertTrue( log.indexOf( "Filter rows" ) != -1 );
-    assertTrue( log.indexOf( "R=148" ) != -1 );
-    assertTrue( log.indexOf( "Java Script Value" ) != -1 );
-    assertTrue( log.indexOf( "W=5" ) != -1 );
-    assertTrue( log.indexOf( "XML Output" ) != -1 );
-    assertTrue( log.indexOf( "O=5" ) != -1 );
+    assertTrue( log.indexOf( "QUADRANT_ACTUALS.0 - Finished processing (I=148, O=0, R=0, W=148, U=0, E=0)" ) != -1 );
+    assertTrue( log.indexOf( "Filter rows.0 - Finished processing (I=0, O=0, R=148, W=5, U=0, E=0)" ) != -1 );
+    assertTrue( log.indexOf( "Java Script Value.0 - Finished processing (I=0, O=0, R=5, W=5, U=0, E=0)" ) != -1 );
+    assertTrue( log.indexOf( "XML Output.0 - Finished processing (I=0, O=0, R=5, W=5, U=0, E=0)" ) != -1 );
     assertNotNull( log );
   }
 
@@ -313,14 +305,10 @@ public class PdiActionTest {
     assertNotNull( rows );
 
     String log = action.getLog();
-    assertTrue( log.indexOf( "QUADRANT_ACTUALS" ) != -1 );
-    assertTrue( log.indexOf( "R=148" ) != -1 );
-    assertTrue( log.indexOf( "Filter rows" ) != -1 );
-    assertTrue( log.indexOf( "R=148" ) != -1 );
-    assertTrue( log.indexOf( "Java Script Value" ) != -1 );
-    assertTrue( log.indexOf( "W=5" ) != -1 );
-    assertTrue( log.indexOf( "XML Output" ) != -1 );
-    assertTrue( log.indexOf( "O=5" ) != -1 );
+    assertTrue( log.indexOf( "QUADRANT_ACTUALS.0 - Finished processing (I=148, O=0, R=0, W=148, U=0, E=0)" ) != -1 );
+    assertTrue( log.indexOf( "Filter rows.0 - Finished processing (I=0, O=0, R=148, W=5, U=0, E=0)" ) != -1 );
+    assertTrue( log.indexOf( "Java Script Value.0 - Finished processing (I=0, O=0, R=5, W=5, U=0, E=0)" ) != -1 );
+    assertTrue( log.indexOf( "XML Output.0 - Finished processing (I=0, O=0, R=5, W=5, U=0, E=0)" ) != -1 );
     assertNotNull( log );
   }
 
@@ -415,7 +403,7 @@ public class PdiActionTest {
     mp.define( ISolutionEngine.class, SolutionEngine.class );
     mp.define( IUnifiedRepository.class, FileSystemBackedUnifiedRepository.class, Scope.GLOBAL );
     FileSystemBackedUnifiedRepository repo =
-      (FileSystemBackedUnifiedRepository) PentahoSystem.get( IUnifiedRepository.class );
+        (FileSystemBackedUnifiedRepository) PentahoSystem.get( IUnifiedRepository.class );
     repo.setRootDir( new File( "test-src/solution" ) );
 
     mp.start();
@@ -509,8 +497,8 @@ public class PdiActionTest {
 
     // 2) log scraping: check what the ktr's calculation was for ${first} + ${last} = ${fullName}
     String logScraping = component.getLog().substring(
-      component.getLog().indexOf( "${first} + ${last} = ${fullName}" ),
-      component.getLog().indexOf( "====================" ) );
+        component.getLog().indexOf( "${first} + ${last} = ${fullName}" ),
+        component.getLog().indexOf( "====================" ) );
 
     if ( logScraping != null && logScraping.contains( "fullName =" ) ) {
       logScraping = logScraping.substring( logScraping.indexOf( "fullName =" ) );
