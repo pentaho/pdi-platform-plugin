@@ -30,6 +30,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.pentaho.di.cluster.SlaveServer;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.KettleEnvironment;
+import org.pentaho.di.core.Props;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.logging.LogChannel;
 import org.pentaho.di.core.logging.LogWriter;
@@ -151,6 +152,7 @@ public class KettleSystemListener implements IPentahoSystemListener {
   public static void environmentInit(final IPentahoSession session) throws KettleException {
     // init kettle without simplejndi
     KettleEnvironment.init(false);
+    Props.init( null );
   }
 
   public void shutdown() {
