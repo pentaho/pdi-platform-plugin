@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+* Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
@@ -38,7 +38,7 @@ import org.pentaho.platform.engine.security.SecurityHelper;
 import org.pentaho.platform.engine.services.solution.SolutionEngine;
 import org.pentaho.platform.repository2.unified.fs.FileSystemBackedUnifiedRepository;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
-import org.springframework.security.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.util.Assert;
 
 import java.io.File;
@@ -80,7 +80,7 @@ public class UserParametersTest {
     mp.define( ISolutionEngine.class, SolutionEngine.class );
     mp.define( IUnifiedRepository.class, FileSystemBackedUnifiedRepository.class, Scope.GLOBAL );
     FileSystemBackedUnifiedRepository repo =
-      (FileSystemBackedUnifiedRepository) PentahoSystem.get( IUnifiedRepository.class );
+        (FileSystemBackedUnifiedRepository) PentahoSystem.get( IUnifiedRepository.class );
     File root = new File( BASE_DIR );
     repo.setRootDir( root );
 

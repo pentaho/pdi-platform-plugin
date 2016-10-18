@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2014 Pentaho Corporation..  All rights reserved.
+* Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
@@ -88,25 +88,22 @@ import org.pentaho.platform.plugin.kettle.security.policy.rolebased.actions.Repo
  * EXECUTION_LOG_OUTPUT - (execution-log) [JOB | TRANS] Returns the resultant log
  * 
  * TRANSFORM_SUCCESS_OUTPUT - (transformation-written) [Requires MONITORSTEP to be defined] [TRANS] Returns a
- * "result-set" for all successful rows written
- * (Unless error handling is not defined for the specified step, in which case ALL rows are returned here)
+ * "result-set" for all successful rows written (Unless error handling is not defined for the specified step, in which
+ * case ALL rows are returned here)
  * 
- * TRANSFORM_ERROR_OUTPUT - (transformation-errors) [Requires MONITORSTEP to be defined] [TRANS] Returns a
- * "result-set" for all rows written that have caused an
- * error
+ * TRANSFORM_ERROR_OUTPUT - (transformation-errors) [Requires MONITORSTEP to be defined] [TRANS] Returns a "result-set"
+ * for all rows written that have caused an error
  * 
- * TRANSFORM_SUCCESS_COUNT_OUTPUT - (transformation-written-count) [Requires MONITORSTEP to be defined] [TRANS]
- * Returns a count of all rows returned in
- * TRANSFORM_SUCCESS_OUTPUT
+ * TRANSFORM_SUCCESS_COUNT_OUTPUT - (transformation-written-count) [Requires MONITORSTEP to be defined] [TRANS] Returns
+ * a count of all rows returned in TRANSFORM_SUCCESS_OUTPUT
  * 
- * TRANSFORM_ERROR_COUNT_OUTPUT - (transformation-errors-count) [Requires MONITORSTEP to be defined] [TRANS] Returns
- * a count of all rows returned in
- * TRANSFORM_ERROR_OUTPUT
+ * TRANSFORM_ERROR_COUNT_OUTPUT - (transformation-errors-count) [Requires MONITORSTEP to be defined] [TRANS] Returns a
+ * count of all rows returned in TRANSFORM_ERROR_OUTPUT
  * 
  * Legitimate inputs: MONITORSTEP Takes the name of the step from which success and error rows can be detected
  * 
- * KETTLELOGLEVEL Sets the logging level to be used in the EXECUTION_LOG_OUTPUT Valid settings: basic detail error
- * debug minimal rowlevel
+ * KETTLELOGLEVEL Sets the logging level to be used in the EXECUTION_LOG_OUTPUT Valid settings: basic detail error debug
+ * minimal rowlevel
  */
 public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowListener {
 
@@ -142,9 +139,9 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
   private LoggingBuffer pdiUserAppender;
 
   private RowProducer rowInjector = null;
-  //package-local for test reasons
+  // package-local for test reasons
   Job localJob = null;
-  //package-local for test reasons
+  // package-local for test reasons
   Trans localTrans = null;
 
   private Log log = LogFactory.getLog( PdiAction.class );
@@ -160,6 +157,10 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
   private String runSafeMode;
   private String runClustered;
 
+  // When the Transformation prepare execution fails, the exception is logged and not thrown to the caller. Adding a
+  // flag to indicate the success/failure of this steps
+  private boolean transPrepExecutionFailure = false;
+
   public void setLogger( Log log ) {
     this.log = log;
   }
@@ -173,18 +174,16 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
   public void validate() throws ActionValidationException {
     if ( directory == null ) {
       throw new ActionValidationException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
-        .getErrorString( "PdiAction.ERROR_0001_DIR_NOT_SET" ) ); //$NON-NLS-1$
+          .getErrorString( "PdiAction.ERROR_0001_DIR_NOT_SET" ) ); //$NON-NLS-1$
     }
     if ( transformation == null && job == null ) {
-      throw new ActionValidationException(
-        org.pentaho.platform.plugin.kettle.messages.Messages.getInstance().getErrorString(
-          "PdiAction.ERROR_0002_JOB_OR_TRANS_NOT_SET" ) ); //$NON-NLS-1$
+      throw new ActionValidationException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
+          .getErrorString( "PdiAction.ERROR_0002_JOB_OR_TRANS_NOT_SET" ) ); //$NON-NLS-1$
     }
 
     if ( injectorStep != null && injectorRows == null ) {
-      throw new ActionValidationException(
-        org.pentaho.platform.plugin.kettle.messages.Messages.getInstance().getErrorString(
-          "PdiAction.ERROR_0003_INJECTOR_ROWS_NOT_SET", injectorStep ) ); //$NON-NLS-1$
+      throw new ActionValidationException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
+          .getErrorString( "PdiAction.ERROR_0003_INJECTOR_ROWS_NOT_SET", injectorStep ) ); //$NON-NLS-1$
     }
   }
 
@@ -217,13 +216,15 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
    */
   public void execute() throws Exception {
 
+    // Reset the flag
+    transPrepExecutionFailure = false;
+
     IAuthorizationPolicy authorizationPolicy =
-      PentahoSystem.get( IAuthorizationPolicy.class, PentahoSessionHolder.getSession() );
+        PentahoSystem.get( IAuthorizationPolicy.class, PentahoSessionHolder.getSession() );
 
     if ( !authorizationPolicy.isAllowed( RepositoryExecuteAction.NAME ) ) {
-      throw new IllegalStateException(
-        org.pentaho.platform.plugin.kettle.messages.Messages.getInstance().getErrorString(
-          "PdiAction.ERROR_0010_NO_PERMISSION_TO_EXECUTE" ) ); //$NON-NLS-1$
+      throw new IllegalStateException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
+          .getErrorString( "PdiAction.ERROR_0010_NO_PERMISSION_TO_EXECUTE" ) ); //$NON-NLS-1$
     }
 
     if ( log.isDebugEnabled() ) {
@@ -252,16 +253,15 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         try {
           transMeta = createTransMetaJCR( repository );
         } catch ( Throwable t ) {
-          //ignored
+          // ignored
         }
 
         if ( transMeta == null ) {
           transMeta = createTransMeta( repository, logWriter );
         }
         if ( transMeta == null ) {
-          throw new IllegalStateException(
-            org.pentaho.platform.plugin.kettle.messages.Messages.getInstance().getErrorString(
-              "PdiAction.ERROR_0004_FAILED_TRANSMETA_CREATION" ) ); //$NON-NLS-1$
+          throw new IllegalStateException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
+              .getErrorString( "PdiAction.ERROR_0004_FAILED_TRANSMETA_CREATION" ) ); //$NON-NLS-1$
         }
         executeTransformation( transMeta, logWriter );
       } else if ( job != null ) {
@@ -272,16 +272,15 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         try {
           jobMeta = createJobMetaJCR( repository );
         } catch ( Throwable t ) {
-          //ignored
+          // ignored
         }
 
         if ( jobMeta == null ) {
           jobMeta = createJobMeta( repository, logWriter );
         }
         if ( jobMeta == null ) {
-          throw new IllegalStateException(
-            org.pentaho.platform.plugin.kettle.messages.Messages.getInstance().getErrorString(
-              "PdiAction.ERROR_0005_FAILED_JOBMETA_CREATION" ) ); //$NON-NLS-1$
+          throw new IllegalStateException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
+              .getErrorString( "PdiAction.ERROR_0005_FAILED_JOBMETA_CREATION" ) ); //$NON-NLS-1$
         }
         executeJob( jobMeta, repository, logWriter );
       }
@@ -311,9 +310,8 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     try {
       transMeta = engineMetaUtil.loadTransMeta( directory, transformation );
     } catch ( FileNotFoundException e ) {
-      throw new ActionExecutionException(
-        org.pentaho.platform.plugin.kettle.messages.Messages.getInstance().getErrorString(
-          "PdiAction.ERROR_0006_FAILED_TRANSMETA_CREATION", directory, transformation ), e ); //$NON-NLS-1$
+      throw new ActionExecutionException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
+          .getErrorString( "PdiAction.ERROR_0006_FAILED_TRANSMETA_CREATION", directory, transformation ), e ); //$NON-NLS-1$
     }
     if ( arguments != null ) {
       transMeta.setArguments( arguments );
@@ -335,9 +333,8 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
       RepositoryFile transFile = unifiedRepository.getFile( idTopath( transformation ) );
       transMeta = repository.loadTransformation( new StringObjectId( (String) transFile.getId() ), null );
     } catch ( Throwable e ) {
-      throw new ActionExecutionException(
-        org.pentaho.platform.plugin.kettle.messages.Messages.getInstance().getErrorString(
-          "PdiAction.ERROR_0006_FAILED_TRANSMETA_CREATION", directory, transformation ), e ); //$NON-NLS-1$
+      throw new ActionExecutionException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
+          .getErrorString( "PdiAction.ERROR_0006_FAILED_TRANSMETA_CREATION", directory, transformation ), e ); //$NON-NLS-1$
     }
     if ( arguments != null ) {
       transMeta.setArguments( arguments );
@@ -364,9 +361,8 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     try {
       jobMeta = engineMetaUtil.loadJobMeta( directory, job );
     } catch ( FileNotFoundException e ) {
-      throw new ActionExecutionException(
-        org.pentaho.platform.plugin.kettle.messages.Messages.getInstance().getErrorString(
-          "PdiAction.ERROR_0007_FAILED_JOBMETA_CREATION", directory, job ), e ); //$NON-NLS-1$
+      throw new ActionExecutionException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
+          .getErrorString( "PdiAction.ERROR_0007_FAILED_JOBMETA_CREATION", directory, job ), e ); //$NON-NLS-1$
     }
     if ( arguments != null ) {
       jobMeta.setArguments( arguments );
@@ -388,9 +384,8 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
       RepositoryFile jobFile = unifiedRepository.getFile( idTopath( job ) );
       jobMeta = repository.loadJob( new StringObjectId( (String) jobFile.getId() ), null );
     } catch ( Throwable e ) {
-      throw new ActionExecutionException(
-        org.pentaho.platform.plugin.kettle.messages.Messages.getInstance().getErrorString(
-          "PdiAction.ERROR_0006_FAILED_TRANSMETA_CREATION", directory, transformation ), e ); //$NON-NLS-1$
+      throw new ActionExecutionException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
+          .getErrorString( "PdiAction.ERROR_0006_FAILED_TRANSMETA_CREATION", directory, transformation ), e ); //$NON-NLS-1$
     }
     if ( arguments != null ) {
       jobMeta.setArguments( arguments );
@@ -443,7 +438,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
   protected String getJobName( String carteObjectId ) {
     // the name returned here is going to be specific to the user + job path + name
     // if we just used the name, we're likely to clobber more often
-    //return directory + "/" + job + " [" + PentahoSessionHolder.getSession().getName() + ":" + carteObjectId + "]";
+    // return directory + "/" + job + " [" + PentahoSessionHolder.getSession().getName() + ":" + carteObjectId + "]";
     // $NON-NLS-1$ //$NON-NLS-2$
     return job;
   }
@@ -451,7 +446,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
   protected String getTransformationName( String carteObjectId ) {
     // the name returned here is going to be specific to the user + transformation path + name
     // if we just used the name, we're likely to clobber more often
-    //return directory + "/" + transformation + " [" + PentahoSessionHolder.getSession().getName() + ":" +
+    // return directory + "/" + transformation + " [" + PentahoSessionHolder.getSession().getName() + ":" +
     // carteObjectId + "]"; //$NON-NLS-1$ //$NON-NLS-2$
     return transformation;
   }
@@ -486,28 +481,25 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         localTrans.shareVariablesWith( transMeta );
         String carteObjectId = UUID.randomUUID().toString();
         localTrans.setContainerObjectId( carteObjectId );
-        CarteSingleton
-          .getInstance()
-          .getTransformationMap()
-          .addTransformation( getTransformationName( carteObjectId ), carteObjectId, localTrans,
-            new TransConfiguration( localTrans.getTransMeta(), transExConfig ) );
+        CarteSingleton.getInstance().getTransformationMap().addTransformation( getTransformationName( carteObjectId ),
+            carteObjectId, localTrans, new TransConfiguration( localTrans.getTransMeta(), transExConfig ) );
 
       } catch ( Exception e ) {
-        throw new ActionExecutionException(
-          Messages.getInstance().getErrorString( "Kettle.ERROR_0010_BAD_TRANSFORMATION_METADATA" ), e ); //$NON-NLS-1$
+        throw new ActionExecutionException( Messages.getInstance().getErrorString(
+            "Kettle.ERROR_0010_BAD_TRANSFORMATION_METADATA" ), e ); //$NON-NLS-1$
       }
     }
 
     if ( localTrans == null ) {
-      throw new ActionExecutionException(
-        Messages.getInstance().getErrorString( "Kettle.ERROR_0010_BAD_TRANSFORMATION_METADATA" ) ); //$NON-NLS-1$
+      throw new ActionExecutionException( Messages.getInstance().getErrorString(
+          "Kettle.ERROR_0010_BAD_TRANSFORMATION_METADATA" ) ); //$NON-NLS-1$
     }
 
     if ( localTrans != null ) {
       // OK, we have the transformation, now run it!
       if ( !customizeTrans( localTrans, logWriter ) ) {
-        throw new ActionExecutionException(
-          Messages.getInstance().getErrorString( "Kettle.ERROR_0028_CUSTOMIZATION_FUNCITON_FAILED" ) ); //$NON-NLS-1$
+        throw new ActionExecutionException( Messages.getInstance().getErrorString(
+            "Kettle.ERROR_0028_CUSTOMIZATION_FUNCITON_FAILED" ) ); //$NON-NLS-1$
       }
 
       if ( log.isDebugEnabled() ) {
@@ -519,9 +511,9 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         localTrans.setSafeModeEnabled( Boolean.valueOf( runSafeMode ) );
         localTrans.prepareExecution( transMeta.getArguments() );
       } catch ( Exception e ) {
+        transPrepExecutionFailure = true;
         // don't throw exception, because the scheduler may try to run this transformation again
-        log.error( Messages.getInstance().getErrorString( "Kettle.ERROR_0011_TRANSFORMATION_PREPARATION_FAILED" ),
-            e ); //$NON-NLS-1$
+        log.error( Messages.getInstance().getErrorString( "Kettle.ERROR_0011_TRANSFORMATION_PREPARATION_FAILED" ), e ); // $NON-NLS-1$
         return;
       }
 
@@ -538,8 +530,8 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
           registerAsStepListener( stepName, localTrans );
         }
       } catch ( Exception e ) {
-        throw new ActionExecutionException(
-          Messages.getInstance().getErrorString( "Kettle.ERROR_0012_ROW_LISTENER_CREATE_FAILED" ), e ); //$NON-NLS-1$
+        throw new ActionExecutionException( Messages.getInstance().getErrorString(
+            "Kettle.ERROR_0012_ROW_LISTENER_CREATE_FAILED" ), e ); //$NON-NLS-1$
       }
 
       try {
@@ -551,8 +543,8 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
           registerAsProducer( injectorStep, localTrans );
         }
       } catch ( Exception e ) {
-        throw new ActionExecutionException(
-          Messages.getInstance().getErrorString( "Kettle.ERROR_0012_ROW_INJECTOR_CREATE_FAILED" ), e ); //$NON-NLS-1$
+        throw new ActionExecutionException( Messages.getInstance().getErrorString(
+            "Kettle.ERROR_0012_ROW_INJECTOR_CREATE_FAILED" ), e ); //$NON-NLS-1$
       }
 
       try {
@@ -561,8 +553,8 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         }
         localTrans.startThreads();
       } catch ( Exception e ) {
-        throw new ActionExecutionException(
-          Messages.getInstance().getErrorString( "Kettle.ERROR_0013_TRANSFORMATION_START_FAILED" ), e ); //$NON-NLS-1$
+        throw new ActionExecutionException( Messages.getInstance().getErrorString(
+            "Kettle.ERROR_0013_TRANSFORMATION_START_FAILED" ), e ); //$NON-NLS-1$
       }
 
       // inject rows if necessary
@@ -584,8 +576,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
           }
           rowInjector.finished();
         } catch ( Exception e ) {
-          throw new ActionExecutionException( Messages.getInstance().getErrorString( "Row injection failed" ),
-            e ); //$NON-NLS-1$
+          throw new ActionExecutionException( Messages.getInstance().getErrorString( "Row injection failed" ), e ); // $NON-NLS-1$
         }
       }
 
@@ -599,9 +590,8 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         localTrans.cleanup();
       } catch ( Exception e ) {
         int transErrors = localTrans.getErrors();
-        throw new ActionExecutionException(
-          org.pentaho.platform.plugin.kettle.messages.Messages.getInstance().getErrorString(
-            "PdiAction.ERROR_0009_TRANSFORMATION_HAD_ERRORS", Integer.toString( transErrors ) ), e ); //$NON-NLS-1$
+        throw new ActionExecutionException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
+            .getErrorString( "PdiAction.ERROR_0009_TRANSFORMATION_HAD_ERRORS", Integer.toString( transErrors ) ), e ); //$NON-NLS-1$
       }
 
       // Dump the Kettle log...
@@ -648,9 +638,9 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
 
           // create the metadata that the Pentaho result sets need
           String[] fieldNames = row.getFieldNames();
-          String[][] columns = new String[ 1 ][ fieldNames.length ];
+          String[][] columns = new String[1][fieldNames.length];
           for ( int column = 0; column < fieldNames.length; column++ ) {
-            columns[ 0 ][ column ] = fieldNames[ column ];
+            columns[0][column] = fieldNames[column];
           }
           if ( log.isDebugEnabled() ) {
             log.debug( Messages.getInstance().getString( "Kettle.DEBUG_CREATING_RESULTSET_METADATA" ) ); //$NON-NLS-1$
@@ -726,13 +716,12 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         localJob.shareVariablesWith( jobMeta );
         String carteObjectId = UUID.randomUUID().toString();
         localJob.setContainerObjectId( carteObjectId );
-        CarteSingleton.getInstance().getJobMap()
-          .addJob( getJobName( carteObjectId ), carteObjectId, localJob,
+        CarteSingleton.getInstance().getJobMap().addJob( getJobName( carteObjectId ), carteObjectId, localJob,
             new JobConfiguration( localJob.getJobMeta(), jobExConfig ) );
 
       } catch ( Exception e ) {
-        throw new ActionExecutionException(
-          Messages.getInstance().getErrorString( "Kettle.ERROR_0021_BAD_JOB_METADATA" ), e ); //$NON-NLS-1$
+        throw new ActionExecutionException( Messages.getInstance().getErrorString(
+            "Kettle.ERROR_0021_BAD_JOB_METADATA" ), e ); //$NON-NLS-1$
       }
 
     }
@@ -740,8 +729,8 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
       if ( log.isDebugEnabled() ) {
         log.debug( pdiUserAppender.getBuffer().toString() );
       }
-      throw new ActionExecutionException(
-        Messages.getInstance().getErrorString( "Kettle.ERROR_0021_BAD_JOB_METADATA" ) ); //$NON-NLS-1$
+      throw new ActionExecutionException( Messages.getInstance().getErrorString(
+          "Kettle.ERROR_0021_BAD_JOB_METADATA" ) ); //$NON-NLS-1$
     }
     if ( localJob != null ) {
       try {
@@ -753,8 +742,8 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         localJob.start();
 
       } catch ( Throwable e ) {
-        throw new ActionExecutionException(
-          Messages.getInstance().getErrorString( "Kettle.ERROR_0022_JOB_START_FAILED" ), e ); //$NON-NLS-1$
+        throw new ActionExecutionException( Messages.getInstance().getErrorString(
+            "Kettle.ERROR_0022_JOB_START_FAILED" ), e ); //$NON-NLS-1$
       }
 
       // It's running in a separate tread to allow monitoring, etc.
@@ -791,8 +780,8 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
    * @throws KettleSecurityException
    * @throws ActionExecutionException
    */
-  protected Repository connectToRepository( final LogWriter logWriter )
-    throws KettleSecurityException, KettleException, ActionExecutionException {
+  protected Repository connectToRepository( final LogWriter logWriter ) throws KettleSecurityException, KettleException,
+    ActionExecutionException {
 
     if ( log.isDebugEnabled() ) {
       log.debug( Messages.getInstance().getString( "Kettle.DEBUG_META_REPOSITORY" ) ); //$NON-NLS-1$
@@ -805,7 +794,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     }
 
     boolean singleDiServerInstance =
-      "true".equals( PentahoSystem.getSystemSetting( SINGLE_DI_SERVER_INSTANCE, "true" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+        "true".equals( PentahoSystem.getSystemSetting( SINGLE_DI_SERVER_INSTANCE, "true" ) ); //$NON-NLS-1$ //$NON-NLS-2$
 
     try {
       if ( singleDiServerInstance ) {
@@ -817,14 +806,14 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         // transformations or jobs from anywhere but the local server.
 
         String repositoriesXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><repositories>" //$NON-NLS-1$
-          + "<repository><id>PentahoEnterpriseRepository</id>" //$NON-NLS-1$
-          + "<name>" + SINGLE_DI_SERVER_INSTANCE + "</name>" //$NON-NLS-1$ //$NON-NLS-2$
-          + "<description>" + SINGLE_DI_SERVER_INSTANCE + "</description>" //$NON-NLS-1$ //$NON-NLS-2$
-          + "<repository_location_url>" + PentahoSystem.getApplicationContext().getFullyQualifiedServerURL()
-          + "</repository_location_url>" //$NON-NLS-1$ //$NON-NLS-2$
-          + "<version_comment_mandatory>N</version_comment_mandatory>" //$NON-NLS-1$
-          + "</repository>" //$NON-NLS-1$
-          + "</repositories>"; //$NON-NLS-1$
+            + "<repository><id>PentahoEnterpriseRepository</id>" //$NON-NLS-1$
+            + "<name>" + SINGLE_DI_SERVER_INSTANCE + "</name>" //$NON-NLS-1$ //$NON-NLS-2$
+            + "<description>" + SINGLE_DI_SERVER_INSTANCE + "</description>" //$NON-NLS-1$ //$NON-NLS-2$
+            + "<repository_location_url>" + PentahoSystem.getApplicationContext().getFullyQualifiedServerURL()
+            + "</repository_location_url>" //$NON-NLS-1$ //$NON-NLS-2$
+            + "<version_comment_mandatory>N</version_comment_mandatory>" //$NON-NLS-1$
+            + "</repository>" //$NON-NLS-1$
+            + "</repositories>"; //$NON-NLS-1$
 
         ByteArrayInputStream sbis = new ByteArrayInputStream( repositoriesXml.getBytes( "UTF8" ) );
         repositoriesMeta.readDataFromInputStream( sbis );
@@ -833,8 +822,8 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         repositoriesMeta.readData(); // Read from the default $HOME/.kettle/repositories.xml file.
       }
     } catch ( Exception e ) {
-      throw new ActionExecutionException(
-        Messages.getInstance().getErrorString( "Kettle.ERROR_0018_META_REPOSITORY_NOT_POPULATED" ), e ); //$NON-NLS-1$
+      throw new ActionExecutionException( Messages.getInstance().getErrorString(
+          "Kettle.ERROR_0018_META_REPOSITORY_NOT_POPULATED" ), e ); //$NON-NLS-1$
     }
 
     if ( log.isDebugEnabled() ) {
@@ -850,17 +839,16 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
       }
 
     } catch ( Exception e ) {
-      throw new ActionExecutionException(
-        Messages.getInstance().getErrorString( "Kettle.ERROR_0004_REPOSITORY_NOT_FOUND", repositoryName ),
-        e ); //$NON-NLS-1$
+      throw new ActionExecutionException( Messages.getInstance().getErrorString(
+          "Kettle.ERROR_0004_REPOSITORY_NOT_FOUND", repositoryName ), e ); // $NON-NLS-1$
     }
 
     if ( repositoryMeta == null ) {
       if ( log.isDebugEnabled() ) {
         log.debug( pdiUserAppender.getBuffer().toString() );
       }
-      throw new ActionExecutionException( Messages.getInstance()
-        .getErrorString( "Kettle.ERROR_0004_REPOSITORY_NOT_FOUND", repositoryName ) ); //$NON-NLS-1$
+      throw new ActionExecutionException( Messages.getInstance().getErrorString(
+          "Kettle.ERROR_0004_REPOSITORY_NOT_FOUND", repositoryName ) ); //$NON-NLS-1$
     }
 
     if ( log.isDebugEnabled() ) {
@@ -869,13 +857,13 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     Repository repository = null;
     try {
       repository =
-        PluginRegistry.getInstance().loadClass( RepositoryPluginType.class, repositoryMeta.getId(), Repository.class );
+          PluginRegistry.getInstance().loadClass( RepositoryPluginType.class, repositoryMeta.getId(),
+              Repository.class );
       repository.init( repositoryMeta );
 
     } catch ( Exception e ) {
-      throw new ActionExecutionException(
-        Messages.getInstance().getErrorString( "Kettle.ERROR_0016_COULD_NOT_GET_REPOSITORY_INSTANCE" ),
-        e ); //$NON-NLS-1$
+      throw new ActionExecutionException( Messages.getInstance().getErrorString(
+          "Kettle.ERROR_0016_COULD_NOT_GET_REPOSITORY_INSTANCE" ), e ); // $NON-NLS-1$
     }
 
     // OK, now try the username and password
@@ -928,35 +916,35 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     }
     try {
       // create a new row object
-      Object[] pentahoRow = new Object[ memResults.getColumnCount() ];
+      Object[] pentahoRow = new Object[memResults.getColumnCount()];
       for ( int columnNo = 0; columnNo < memResults.getColumnCount(); columnNo++ ) {
         // process each column in this row
         ValueMetaInterface valueMeta = rowMeta.getValueMeta( columnNo );
 
-        switch( valueMeta.getType() ) {
+        switch ( valueMeta.getType() ) {
           case ValueMetaInterface.TYPE_BIGNUMBER:
-            pentahoRow[ columnNo ] = rowMeta.getBigNumber( row, columnNo );
+            pentahoRow[columnNo] = rowMeta.getBigNumber( row, columnNo );
             break;
           case ValueMetaInterface.TYPE_BOOLEAN:
-            pentahoRow[ columnNo ] = rowMeta.getBoolean( row, columnNo );
+            pentahoRow[columnNo] = rowMeta.getBoolean( row, columnNo );
             break;
           case ValueMetaInterface.TYPE_DATE:
-            pentahoRow[ columnNo ] = rowMeta.getDate( row, columnNo );
+            pentahoRow[columnNo] = rowMeta.getDate( row, columnNo );
             break;
           case ValueMetaInterface.TYPE_INTEGER:
-            pentahoRow[ columnNo ] = rowMeta.getInteger( row, columnNo );
+            pentahoRow[columnNo] = rowMeta.getInteger( row, columnNo );
             break;
           case ValueMetaInterface.TYPE_NONE:
-            pentahoRow[ columnNo ] = rowMeta.getString( row, columnNo );
+            pentahoRow[columnNo] = rowMeta.getString( row, columnNo );
             break;
           case ValueMetaInterface.TYPE_NUMBER:
-            pentahoRow[ columnNo ] = rowMeta.getNumber( row, columnNo );
+            pentahoRow[columnNo] = rowMeta.getNumber( row, columnNo );
             break;
           case ValueMetaInterface.TYPE_STRING:
-            pentahoRow[ columnNo ] = rowMeta.getString( row, columnNo );
+            pentahoRow[columnNo] = rowMeta.getString( row, columnNo );
             break;
           default:
-            pentahoRow[ columnNo ] = rowMeta.getString( row, columnNo );
+            pentahoRow[columnNo] = rowMeta.getString( row, columnNo );
         }
       }
       // add the row to the result set
@@ -1084,7 +1072,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     } else if ( localJob != null ) {
       return localJob.getStatus();
     } else {
-      return Messages.getInstance().getErrorString( "Kettle.ERROR_0025_NOT_LOADED" ); //$NON-NLS-1$;
+      return Messages.getInstance().getErrorString( "Kettle.ERROR_0025_NOT_LOADED" ); //$NON-NLS-1$ ;
     }
   }
 
@@ -1141,5 +1129,9 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
 
   public void setRunClustered( String runClustered ) {
     this.runClustered = runClustered;
+  }
+
+  public boolean isTransPrepareExecutionFailed() {
+    return transPrepExecutionFailure;
   }
 }

@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+* Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
@@ -23,7 +23,7 @@ import java.util.List;
 import org.pentaho.platform.api.engine.IUserRoleListService;
 import org.pentaho.platform.api.mt.ITenant;
 
-@SuppressWarnings( { "nls", "unchecked" })
+@SuppressWarnings( { "nls", "unchecked" } )
 public class StubUserRoleListService implements IUserRoleListService {
 
   public List getAllRoles() {
@@ -36,34 +36,34 @@ public class StubUserRoleListService implements IUserRoleListService {
     return null;
   }
 
-  public List getUsersInRole(String role) {
+  public List getUsersInRole( String role ) {
     // TODO Auto-generated method stub
     return null;
   }
 
-  public List getRolesForUser(String userName) {
-    return Arrays.asList("FL_GATOR", "FS_SEMINOLE");
+  public List getRolesForUser( String userName ) {
+    return Arrays.asList( "FL_GATOR", "FS_SEMINOLE" );
   }
 
   @Override
-  public List<String> getAllRoles(ITenant arg0) {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  public List<String> getAllUsers(ITenant arg0) {
+  public List<String> getAllRoles( ITenant arg0 ) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public List<String> getRolesForUser(ITenant arg0, String arg1) {
-    return Arrays.asList("FL_GATOR", "FS_SEMINOLE");
+  public List<String> getAllUsers( ITenant arg0 ) {
+    // TODO Auto-generated method stub
+    return null;
   }
 
   @Override
-  public List<String> getUsersInRole(ITenant arg0, String arg1) {
+  public List<String> getRolesForUser( ITenant arg0, String arg1 ) {
+    return Arrays.asList( "FL_GATOR", "FS_SEMINOLE" );
+  }
+
+  @Override
+  public List<String> getUsersInRole( ITenant arg0, String arg1 ) {
     // TODO Auto-generated method stub
     return null;
   }
