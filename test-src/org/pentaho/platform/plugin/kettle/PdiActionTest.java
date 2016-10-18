@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2014 Pentaho Corporation..  All rights reserved.
+* Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
@@ -20,6 +20,8 @@ package org.pentaho.platform.plugin.kettle;
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
+import static org.junit.Assert.assertTrue;
+
 import org.pentaho.commons.connection.IPentahoResultSet;
 import org.pentaho.commons.connection.memory.MemoryMetaData;
 import org.pentaho.commons.connection.memory.MemoryResultSet;
@@ -46,7 +48,7 @@ import org.pentaho.platform.plugin.kettle.security.policy.rolebased.actions.Repo
 import org.pentaho.platform.repository2.unified.fs.FileSystemBackedUnifiedRepository;
 import org.pentaho.platform.scheduler2.quartz.QuartzScheduler;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
-import org.springframework.security.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.util.Assert;
 
 import java.io.File;
@@ -71,13 +73,11 @@ public class PdiActionTest {
 
   @Before
   public void init() throws SchedulerException, PlatformInitializationException {
-    System
-      .setProperty( "java.naming.factory.initial", "org.osjava.sj.SimpleContextFactory" ); //$NON-NLS-1$ //$NON-NLS-2$
+    System.setProperty( "java.naming.factory.initial", "org.osjava.sj.SimpleContextFactory" ); //$NON-NLS-1$ //$NON-NLS-2$
     System.setProperty( "org.osjava.sj.root", "test-src/simple-jndi" ); //$NON-NLS-1$ //$NON-NLS-2$
     System.setProperty( "org.osjava.sj.delimiter", "/" ); //$NON-NLS-1$ //$NON-NLS-2$
 
-    System.setProperty( "PENTAHO_SYS_CFG_PATH",
-        new File( "test-src/solution/pentaho.xml" ).getAbsolutePath() ); //$NON-NLS-1$
+    System.setProperty( "PENTAHO_SYS_CFG_PATH", new File( "test-src/solution/pentaho.xml" ).getAbsolutePath() ); //$NON-NLS-2$
 
     IPentahoSession session = new StandaloneSession();
     PentahoSessionHolder.setSession( session );
@@ -133,17 +133,17 @@ public class PdiActionTest {
     List lines = FileUtils.readLines( new File( "testTransformationVariableOverrides.out.txt" ) );
     assertTrue( "File \"testTransformationVariableOverrides.out.txt\" should not be empty", lines.size() > 0 );
     String rowData = (String) lines.get( 1 );
-    //Columns are as follows:
-    //generatedRow|cmdLineArg1|param1|param2|repositoryDirectory|customVariable
+    // Columns are as follows:
+    // generatedRow|cmdLineArg1|param1|param2|repositoryDirectory|customVariable
     String[] columnData = rowData.split( "\\|" );
-    assertEquals( "param1 value is wrong (default value should be in effect)", "param1DefaultValue",
-        columnData[ 2 ].trim() );
-    assertEquals( "param2 value is wrong (overridden value should be in effect)", 12L,
-        Long.parseLong( columnData[ 3 ].trim() ) );
+    assertEquals( "param1 value is wrong (default value should be in effect)", "param1DefaultValue", columnData[2]
+        .trim() );
+    assertEquals( "param2 value is wrong (overridden value should be in effect)", 12L, Long.parseLong( columnData[3]
+        .trim() ) );
 
     assertEquals( "The number of rows generated should have equaled the value of param2", 13, lines.size() );
 
-    assertEquals( "customVariable value is wrong", "customVariableValue", columnData[ 5 ].trim() );
+    assertEquals( "customVariable value is wrong", "customVariableValue", columnData[5].trim() );
   }
 
   @Test
@@ -263,7 +263,7 @@ public class PdiActionTest {
     component.setJob( "pdi/ETLJob1" );
 
     component.execute();
-    //if no exception then the test passes
+    // if no exception then the test passes
   }
 
   @Test
@@ -379,12 +379,10 @@ public class PdiActionTest {
     sleep( 5 );
   }
 
-
   @Test
-  public void testKettleTransformationScheduleWithNoExecutePermision()
-    throws SchedulerException, InterruptedException, PlatformInitializationException {
-    System
-      .setProperty( "java.naming.factory.initial", "org.osjava.sj.SimpleContextFactory" ); //$NON-NLS-1$ //$NON-NLS-2$
+  public void testKettleTransformationScheduleWithNoExecutePermision() throws SchedulerException, InterruptedException,
+    PlatformInitializationException {
+    System.setProperty( "java.naming.factory.initial", "org.osjava.sj.SimpleContextFactory" ); //$NON-NLS-1$ //$NON-NLS-2$
     System.setProperty( "org.osjava.sj.root", "test-src/simple-jndi" ); //$NON-NLS-1$ //$NON-NLS-2$
     System.setProperty( "org.osjava.sj.delimiter", "/" ); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -432,7 +430,7 @@ public class PdiActionTest {
       component.validate();
       fail();
     } catch ( Exception ex ) {
-      //ignored
+      // ignored
     }
   }
 
@@ -445,7 +443,7 @@ public class PdiActionTest {
       component.validate();
       fail();
     } catch ( Exception ex ) {
-      //ignored
+      // ignored
     }
   }
 
@@ -458,7 +456,7 @@ public class PdiActionTest {
       component.validate();
       fail();
     } catch ( Exception ex ) {
-      //ignored
+      // ignored
     }
   }
 
@@ -496,9 +494,9 @@ public class PdiActionTest {
     assertEquals( STATUS_FINISHED, component.getStatus() );
 
     // 2) log scraping: check what the ktr's calculation was for ${first} + ${last} = ${fullName}
-    String logScraping = component.getLog().substring(
-        component.getLog().indexOf( "${first} + ${last} = ${fullName}" ),
-        component.getLog().indexOf( "====================" ) );
+    String logScraping =
+        component.getLog().substring( component.getLog().indexOf( "${first} + ${last} = ${fullName}" ), component
+            .getLog().indexOf( "====================" ) );
 
     if ( logScraping != null && logScraping.contains( "fullName =" ) ) {
       logScraping = logScraping.substring( logScraping.indexOf( "fullName =" ) );
@@ -571,6 +569,23 @@ public class PdiActionTest {
       action.setTransformation( "pdi/init_fail_test" );
 
       action.execute();
+    } catch ( Exception e ) {
+      e.printStackTrace();
+      fail( "Exception is thrown: " + e.getLocalizedMessage() );
+    }
+  }
+
+  @Test
+  public void testTransformationPrepareExecutionFailed() {
+    try {
+      PdiAction action = new PdiAction();
+      action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
+
+      action.setDirectory( "test-src/solution" );
+      action.setTransformation( "pdi/samplePrepExecutionFailed" );
+
+      action.execute();
+      assertTrue( action.isTransPrepareExecutionFailed() );
     } catch ( Exception e ) {
       e.printStackTrace();
       fail( "Exception is thrown: " + e.getLocalizedMessage() );
