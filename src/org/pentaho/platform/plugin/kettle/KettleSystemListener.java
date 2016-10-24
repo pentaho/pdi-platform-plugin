@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+* Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
@@ -34,6 +34,7 @@ import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.logging.LogChannel;
 import org.pentaho.di.core.logging.LogWriter;
 import org.pentaho.di.core.xml.XMLHandler;
+import org.pentaho.di.core.xml.XMLParserFactoryProducer;
 import org.pentaho.di.www.CarteSingleton;
 import org.pentaho.di.www.SlaveServerConfig;
 import org.pentaho.platform.api.engine.IPentahoSession;
@@ -76,7 +77,8 @@ public class KettleSystemListener implements IPentahoSystemListener {
         new File( PentahoSystem.getApplicationContext().getSolutionPath( slaveServerConfigFilename ) );
       if ( slaveServerConfigFile.exists() ) {
         InputStream is = new FileInputStream( slaveServerConfigFile );
-        Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse( is );
+        DocumentBuilderFactory factory = XMLParserFactoryProducer.createSecureDocBuilderFactory();
+        Document document = factory.newDocumentBuilder().parse( is );
         Node configNode = XMLHandler.getSubNode( document, SlaveServerConfig.XML_TAG );
         SlaveServerConfig config = new SlaveServerConfig( new LogChannel( "Slave server config" ), configNode );
         config.setFilename( slaveServerConfigFilename );
