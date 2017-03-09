@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+* Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
@@ -23,7 +23,6 @@ import org.junit.Test;
 import org.pentaho.di.core.parameters.NamedParams;
 import org.pentaho.di.repository.filerep.KettleFileRepositoryMeta;
 import org.pentaho.platform.api.engine.IAuthorizationPolicy;
-import org.pentaho.platform.api.engine.IPentahoDefinableObjectFactory.Scope;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.ISolutionEngine;
 import org.pentaho.platform.api.engine.IUserRoleListService;
@@ -45,17 +44,16 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings( { "all" } )
 public class UserParametersTest {
 
   // this is the parameter named that should be filtered out, given that it starts with an underscore
   private static final String SAMPLE_PROTECTED_PARAMETER_NAME = "_protected";
 
-  private static final String BASE_DIR = "test-src/solution";
-  private static final String SAMPLE_TRANS = "pdi/sampleTrans";
-  private static final String SAMPLE_JOB = "pdi/sampleJob";
+  private static final String SOLUTION_REPOSITORY = "test-src/solution";
+  private static final String SAMPLE_TRANS = "/org/pentaho/platform/plugin/kettle/UserParametersTest.ktr";
+  private static final String SAMPLE_JOB = "/org/pentaho/platform/plugin/kettle/UserParametersTest.kjb";
 
-  private MicroPlatform mp;
+  private MicroPlatform mp = new MicroPlatform( SOLUTION_REPOSITORY );
 
   public static final String SESSION_PRINCIPAL = "SECURITY_PRINCIPAL";
 
@@ -66,23 +64,18 @@ public class UserParametersTest {
     System.setProperty( "java.naming.factory.initial", "org.osjava.sj.SimpleContextFactory" );
     System.setProperty( "org.osjava.sj.root", "test-src/simple-jndi" );
     System.setProperty( "org.osjava.sj.delimiter", "/" );
-
-    System.setProperty( "PENTAHO_SYS_CFG_PATH", new File( BASE_DIR + "/pentaho.xml" ).getAbsolutePath() );
+    System.setProperty( "PENTAHO_SYS_CFG_PATH", new File( SOLUTION_REPOSITORY + "/pentaho.xml" ).getAbsolutePath() );
 
     IPentahoSession session = new StandaloneSession();
     PentahoSessionHolder.setSession( session );
 
-    mp = new MicroPlatform( BASE_DIR );
     mp.define( IUserRoleListService.class, StubUserRoleListService.class );
     mp.define( UserDetailsService.class, StubUserDetailService.class );
     mp.defineInstance( IAuthorizationPolicy.class, new TestAuthorizationPolicy() );
     mp.setSettingsProvider( new PathBasedSystemSettings() );
     mp.define( ISolutionEngine.class, SolutionEngine.class );
-    mp.define( IUnifiedRepository.class, FileSystemBackedUnifiedRepository.class, Scope.GLOBAL );
-    FileSystemBackedUnifiedRepository repo =
-        (FileSystemBackedUnifiedRepository) PentahoSystem.get( IUnifiedRepository.class );
-    File root = new File( BASE_DIR );
-    repo.setRootDir( root );
+    FileSystemBackedUnifiedRepository repo =  new FileSystemBackedUnifiedRepository( SOLUTION_REPOSITORY );
+    mp.defineInstance(  IUnifiedRepository.class, repo );
 
     mp.start();
 
@@ -95,7 +88,7 @@ public class UserParametersTest {
     PdiAction action = new PdiAction();
     action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     action.setArguments( new String[] { "dummyArg" } );
-    action.setDirectory( BASE_DIR );
+    action.setDirectory( SOLUTION_REPOSITORY );
     action.setTransformation( SAMPLE_TRANS );
 
     action.execute();
@@ -118,7 +111,7 @@ public class UserParametersTest {
 
     // we now call IPdiContentProvider.getUserParameters( kjb ), that should filter out protected parameters
     IPdiContentProvider pdiContentProvider = new PdiContentProvider( PentahoSystem.get( IUnifiedRepository.class ) );
-    String[] userParams = pdiContentProvider.getUserParameters( BASE_DIR + SAMPLE_TRANS + ".ktr" );
+    String[] userParams = pdiContentProvider.getUserParameters( SOLUTION_REPOSITORY + SAMPLE_TRANS + ".ktr" );
 
     for ( String userParam : userParams ) {
       protectedParameterNameExistsInKtr |= userParam != null && userParam.equals( SAMPLE_PROTECTED_PARAMETER_NAME );
@@ -134,7 +127,7 @@ public class UserParametersTest {
     PdiAction action = new PdiAction();
     action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     action.setArguments( new String[] { "dummyArg" } );
-    action.setDirectory( BASE_DIR );
+    action.setDirectory( SOLUTION_REPOSITORY );
     action.setJob( SAMPLE_JOB );
 
     action.execute();
@@ -157,7 +150,7 @@ public class UserParametersTest {
 
     // we now call IPdiContentProvider.getUserParameters( kjb ), that should filter out protected parameters
     IPdiContentProvider pdiContentProvider = new PdiContentProvider( PentahoSystem.get( IUnifiedRepository.class ) );
-    String[] userParams = pdiContentProvider.getUserParameters( BASE_DIR + SAMPLE_JOB + ".kjb" );
+    String[] userParams = pdiContentProvider.getUserParameters( SOLUTION_REPOSITORY + SAMPLE_JOB + ".kjb" );
 
     for ( String userParam : userParams ) {
       protectedParameterNameExistsInKjb |= userParam != null && userParam.equals( SAMPLE_PROTECTED_PARAMETER_NAME );

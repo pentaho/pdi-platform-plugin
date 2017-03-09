@@ -1,32 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <transformation>
   <info>
-    <name>SimpleTest</name>
-    <description/>
-    <extended_description/>
-    <trans_version/>
+    <name>PdiContentGeneratorTest_success</name>
+    <description />
+    <extended_description />
+    <trans_version />
     <trans_type>Normal</trans_type>
     <trans_status>0</trans_status>
-    <directory>&#x2f;public&#x2f;bi-developers&#x2f;etl</directory>
+    <directory>/</directory>
     <parameters>
-      <parameter>
-        <name>parmOne</name>
-        <default_value/>
-        <description/>
-      </parameter>
-      <parameter>
-        <name>parmTwo</name>
-        <default_value/>
-        <description/>
-      </parameter>
     </parameters>
     <log>
       <trans-log-table>
-        <connection/>
-        <schema/>
-        <table/>
-        <size_limit_lines/>
-        <interval/>
-        <timeout_days/>
+        <connection />
+        <schema />
+        <table />
+        <size_limit_lines />
+        <interval />
+        <timeout_days />
         <field>
           <id>ID_BATCH</id>
           <enabled>Y</enabled>
@@ -51,37 +42,37 @@
           <id>LINES_READ</id>
           <enabled>Y</enabled>
           <name>LINES_READ</name>
-          <subject/>
+          <subject />
         </field>
         <field>
           <id>LINES_WRITTEN</id>
           <enabled>Y</enabled>
           <name>LINES_WRITTEN</name>
-          <subject/>
+          <subject />
         </field>
         <field>
           <id>LINES_UPDATED</id>
           <enabled>Y</enabled>
           <name>LINES_UPDATED</name>
-          <subject/>
+          <subject />
         </field>
         <field>
           <id>LINES_INPUT</id>
           <enabled>Y</enabled>
           <name>LINES_INPUT</name>
-          <subject/>
+          <subject />
         </field>
         <field>
           <id>LINES_OUTPUT</id>
           <enabled>Y</enabled>
           <name>LINES_OUTPUT</name>
-          <subject/>
+          <subject />
         </field>
         <field>
           <id>LINES_REJECTED</id>
           <enabled>N</enabled>
           <name>LINES_REJECTED</name>
-          <subject/>
+          <subject />
         </field>
         <field>
           <id>ERRORS</id>
@@ -135,11 +126,11 @@
         </field>
       </trans-log-table>
       <perf-log-table>
-        <connection/>
-        <schema/>
-        <table/>
-        <interval/>
-        <timeout_days/>
+        <connection />
+        <schema />
+        <table />
+        <interval />
+        <timeout_days />
         <field>
           <id>ID_BATCH</id>
           <enabled>Y</enabled>
@@ -217,10 +208,10 @@
         </field>
       </perf-log-table>
       <channel-log-table>
-        <connection/>
-        <schema/>
-        <table/>
-        <timeout_days/>
+        <connection />
+        <schema />
+        <table />
+        <timeout_days />
         <field>
           <id>ID_BATCH</id>
           <enabled>Y</enabled>
@@ -283,10 +274,10 @@
         </field>
       </channel-log-table>
       <step-log-table>
-        <connection/>
-        <schema/>
-        <table/>
-        <timeout_days/>
+        <connection />
+        <schema />
+        <table />
+        <timeout_days />
         <field>
           <id>ID_BATCH</id>
           <enabled>Y</enabled>
@@ -359,10 +350,10 @@
         </field>
       </step-log-table>
       <metrics-log-table>
-        <connection/>
-        <schema/>
-        <table/>
-        <timeout_days/>
+        <connection />
+        <schema />
+        <table />
+        <timeout_days />
         <field>
           <id>ID_BATCH</id>
           <enabled>Y</enabled>
@@ -411,23 +402,23 @@
       </metrics-log-table>
     </log>
     <maxdate>
-      <connection/>
-      <table/>
-      <field/>
+      <connection />
+      <table />
+      <field />
       <offset>0.0</offset>
       <maxdiff>0.0</maxdiff>
     </maxdate>
-    <size_rowset>10000</size_rowset>
+    <size_rowset>1000</size_rowset>
     <sleep_time_empty>50</sleep_time_empty>
     <sleep_time_full>50</sleep_time_full>
     <unique_connections>N</unique_connections>
     <feedback_shown>Y</feedback_shown>
-    <feedback_size>50000</feedback_size>
-    <using_thread_priorities>Y</using_thread_priorities>
-    <shared_objects_file/>
+    <feedback_size>5000</feedback_size>
+    <using_thread_priorities>N</using_thread_priorities>
+    <shared_objects_file />
     <capture_step_performance>N</capture_step_performance>
     <step_performance_capturing_delay>1000</step_performance_capturing_delay>
-    <step_performance_capturing_size_limit/>
+    <step_performance_capturing_size_limit />
     <dependencies>
     </dependencies>
     <partitionschemas>
@@ -436,122 +427,275 @@
     </slaveservers>
     <clusterschemas>
     </clusterschemas>
-    <created_user/>
-    <created_date>2016&#x2f;10&#x2f;14 10&#x3a;59&#x3a;31.724</created_date>
+    <created_user />
+    <created_date>2016/10/14 10:59:30.519</created_date>
     <modified_user>-</modified_user>
-    <modified_date>2009&#x2f;07&#x2f;13 14&#x3a;45&#x3a;57.234</modified_date>
-    <key_for_session_key/>
+    <modified_date>2007/10/23 21:23:11.150</modified_date>
+    <key_for_session_key>H4sIAAAAAAAAAAMAAAAAAAAAAAA=</key_for_session_key>
     <is_key_private>N</is_key_private>
   </info>
   <notepads>
+    <notepad>
+      <note>This transformation collects a lot of information about the 
+environment of Pentaho Data Integration and the installed version 
+e.g. in the Pentaho BI Suite</note>
+      <xloc>50</xloc>
+      <yloc>34</yloc>
+      <width>333</width>
+      <heigth>52</heigth>
+      <fontname />
+      <fontsize>-1</fontsize>
+      <fontbold>N</fontbold>
+      <fontitalic>N</fontitalic>
+      <fontcolorred>0</fontcolorred>
+      <fontcolorgreen>0</fontcolorgreen>
+      <fontcolorblue>0</fontcolorblue>
+      <backgroundcolorred>255</backgroundcolorred>
+      <backgroundcolorgreen>205</backgroundcolorgreen>
+      <backgroundcolorblue>112</backgroundcolorblue>
+      <bordercolorred>100</bordercolorred>
+      <bordercolorgreen>100</bordercolorgreen>
+      <bordercolorblue>100</bordercolorblue>
+      <drawshadow>N</drawshadow>
+    </notepad>
+    <notepad>
+      <note>The Row Normaliser gives us a better view to the data</note>
+      <xloc>262</xloc>
+      <yloc>213</yloc>
+      <width>271</width>
+      <heigth>24</heigth>
+      <fontname />
+      <fontsize>-1</fontsize>
+      <fontbold>N</fontbold>
+      <fontitalic>N</fontitalic>
+      <fontcolorred>0</fontcolorred>
+      <fontcolorgreen>0</fontcolorgreen>
+      <fontcolorblue>0</fontcolorblue>
+      <backgroundcolorred>255</backgroundcolorred>
+      <backgroundcolorgreen>205</backgroundcolorgreen>
+      <backgroundcolorblue>112</backgroundcolorblue>
+      <bordercolorred>100</bordercolorred>
+      <bordercolorgreen>100</bordercolorgreen>
+      <bordercolorblue>100</bordercolorblue>
+      <drawshadow>N</drawshadow>
+    </notepad>
+    <notepad>
+      <note>If you add a new field, add
+it also in the Row Normaliser step</note>
+      <xloc>52</xloc>
+      <yloc>212</yloc>
+      <width>170</width>
+      <heigth>38</heigth>
+      <fontname />
+      <fontsize>-1</fontsize>
+      <fontbold>N</fontbold>
+      <fontitalic>N</fontitalic>
+      <fontcolorred>0</fontcolorred>
+      <fontcolorgreen>0</fontcolorgreen>
+      <fontcolorblue>0</fontcolorblue>
+      <backgroundcolorred>255</backgroundcolorred>
+      <backgroundcolorgreen>205</backgroundcolorgreen>
+      <backgroundcolorblue>112</backgroundcolorblue>
+      <bordercolorred>100</bordercolorred>
+      <bordercolorgreen>100</bordercolorgreen>
+      <bordercolorblue>100</bordercolorblue>
+      <drawshadow>N</drawshadow>
+    </notepad>
   </notepads>
   <order>
     <hop>
-      <from>Add sequence</from>
-      <to>Generate random value</to>
+      <from>Get a lot of information</from>
+      <to>Row Normaliser</to>
       <enabled>Y</enabled>
     </hop>
     <hop>
-      <from>Generate random value</from>
-      <to>Output</to>
-      <enabled>Y</enabled>
-    </hop>
-    <hop>
-      <from>Generate Rows</from>
-      <to>Get System Info</to>
-      <enabled>Y</enabled>
-    </hop>
-    <hop>
-      <from>Get System Info</from>
-      <to>Add sequence</to>
+      <from>Row Normaliser</from>
+      <to>result</to>
       <enabled>Y</enabled>
     </hop>
   </order>
   <step>
-    <name>Add sequence</name>
-    <type>Sequence</type>
-    <description/>
+    <name>Get a lot of information</name>
+    <type>GetVariable</type>
+    <description />
     <distribute>Y</distribute>
-    <custom_distribution/>
+    <custom_distribution />
     <copies>1</copies>
     <partitioning>
       <method>none</method>
-      <schema_name/>
-    </partitioning>
-      <valuename>id</valuename>
-      <use_database>N</use_database>
-      <connection/>
-      <schema/>
-      <seqname>SEQ_</seqname>
-      <use_counter>Y</use_counter>
-      <counter_name/>
-      <start_at>&#x24;&#x7b;varOne&#x7d;</start_at>
-      <increment_by>1</increment_by>
-      <max_value>999999999</max_value>
-    <cluster_schema/>
-    <remotesteps>
-      <input>
-      </input>
-      <output>
-      </output>
-    </remotesteps>
-    <GUI>
-      <xloc>448</xloc>
-      <yloc>264</yloc>
-      <draw>Y</draw>
-    </GUI>
-    </step>
-
-  <step>
-    <name>Generate Rows</name>
-    <type>RowGenerator</type>
-    <description/>
-    <distribute>Y</distribute>
-    <custom_distribution/>
-    <copies>1</copies>
-    <partitioning>
-      <method>none</method>
-      <schema_name/>
-    </partitioning>
-    <fields>
-    </fields>
-    <limit>&#x24;&#x7b;parmOne&#x7d;</limit>
-    <never_ending>N</never_ending>
-    <interval_in_ms/>
-    <row_time_field/>
-    <last_time_field/>
-    <cluster_schema/>
-    <remotesteps>
-      <input>
-      </input>
-      <output>
-      </output>
-    </remotesteps>
-    <GUI>
-      <xloc>164</xloc>
-      <yloc>268</yloc>
-      <draw>Y</draw>
-    </GUI>
-    </step>
-
-  <step>
-    <name>Generate random value</name>
-    <type>RandomValue</type>
-    <description/>
-    <distribute>N</distribute>
-    <custom_distribution/>
-    <copies>1</copies>
-    <partitioning>
-      <method>none</method>
-      <schema_name/>
+      <schema_name />
     </partitioning>
     <fields>
       <field>
-        <name>val</name>
-        <type>random integer</type>
+        <name>Internal.Kettle.Version</name>
+        <variable>${Internal.Kettle.Version}</variable>
+        <type>String</type>
+        <format />
+        <currency />
+        <decimal />
+        <group />
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+      </field>
+      <field>
+        <name>Internal.Kettle.Build.Version</name>
+        <variable>${Internal.Kettle.Build.Version}</variable>
+        <type>String</type>
+        <format />
+        <currency />
+        <decimal />
+        <group />
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+      </field>
+      <field>
+        <name>Internal.Kettle.Build.Date</name>
+        <variable>${Internal.Kettle.Build.Date}</variable>
+        <type>String</type>
+        <format />
+        <currency />
+        <decimal />
+        <group />
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+      </field>
+      <field>
+        <name>java.runtime.version</name>
+        <variable>${java.runtime.version}</variable>
+        <type>String</type>
+        <format />
+        <currency />
+        <decimal />
+        <group />
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+      </field>
+      <field>
+        <name>os.name</name>
+        <variable>${os.name}</variable>
+        <type>String</type>
+        <format />
+        <currency />
+        <decimal />
+        <group />
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+      </field>
+      <field>
+        <name>os.version</name>
+        <variable>${os.version}</variable>
+        <type>String</type>
+        <format />
+        <currency />
+        <decimal />
+        <group />
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+      </field>
+      <field>
+        <name>os.arch</name>
+        <variable>${os.arch}</variable>
+        <type>String</type>
+        <format />
+        <currency />
+        <decimal />
+        <group />
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+      </field>
+      <field>
+        <name>user.country</name>
+        <variable>${user.country}</variable>
+        <type>String</type>
+        <format />
+        <currency />
+        <decimal />
+        <group />
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+      </field>
+      <field>
+        <name>user.language</name>
+        <variable>${user.language}</variable>
+        <type>String</type>
+        <format />
+        <currency />
+        <decimal />
+        <group />
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+      </field>
+      <field>
+        <name>user.home</name>
+        <variable>${user.home}</variable>
+        <type>String</type>
+        <format />
+        <currency />
+        <decimal />
+        <group />
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+      </field>
+      <field>
+        <name>KETTLE_HOME</name>
+        <variable>${KETTLE_HOME}</variable>
+        <type>String</type>
+        <format />
+        <currency />
+        <decimal />
+        <group />
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+      </field>
+      <field>
+        <name>pentaho.solutionpath</name>
+        <variable>${pentaho.solutionpath}</variable>
+        <type>String</type>
+        <format />
+        <currency />
+        <decimal />
+        <group />
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+      </field>
+      <field>
+        <name>Internal.Transformation.Filename.Directory</name>
+        <variable>${Internal.Transformation.Filename.Directory}</variable>
+        <type>String</type>
+        <format />
+        <currency />
+        <decimal />
+        <group />
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
+      </field>
+      <field>
+        <name>Internal.Transformation.Filename.Name</name>
+        <variable>${Internal.Transformation.Filename.Name}</variable>
+        <type>String</type>
+        <format />
+        <currency />
+        <decimal />
+        <group />
+        <length>-1</length>
+        <precision>-1</precision>
+        <trim_type>none</trim_type>
       </field>
     </fields>
-    <cluster_schema/>
+    <cluster_schema />
     <remotesteps>
       <input>
       </input>
@@ -559,38 +703,96 @@
       </output>
     </remotesteps>
     <GUI>
-      <xloc>548</xloc>
-      <yloc>261</yloc>
+      <xloc>108</xloc>
+      <yloc>154</yloc>
       <draw>Y</draw>
     </GUI>
-    </step>
-
+  </step>
   <step>
-    <name>Get System Info</name>
-    <type>SystemInfo</type>
-    <description/>
+    <name>Row Normaliser</name>
+    <type>Normaliser</type>
+    <description />
     <distribute>Y</distribute>
-    <custom_distribution/>
+    <custom_distribution />
     <copies>1</copies>
     <partitioning>
       <method>none</method>
-      <schema_name/>
+      <schema_name />
     </partitioning>
+    <typefield>Variable</typefield>
     <fields>
       <field>
-        <name>cmdOne</name>
-        <type>command line argument 1</type>
-        </field>
+        <name>Internal.Kettle.Version</name>
+        <value>Internal.Kettle.Version</value>
+        <norm>Value</norm>
+      </field>
       <field>
-        <name>cmdTwo</name>
-        <type>command line argument 2</type>
-        </field>
+        <name>Internal.Kettle.Build.Version</name>
+        <value>Internal.Kettle.Build.Version</value>
+        <norm>Value</norm>
+      </field>
       <field>
-        <name>cmdThree</name>
-        <type>command line argument 3</type>
-        </field>
-      </fields>
-    <cluster_schema/>
+        <name>Internal.Kettle.Build.Date</name>
+        <value>Internal.Kettle.Build.Date</value>
+        <norm>Value</norm>
+      </field>
+      <field>
+        <name>java.runtime.version</name>
+        <value>java.runtime.version</value>
+        <norm>Value</norm>
+      </field>
+      <field>
+        <name>os.name</name>
+        <value>os.name</value>
+        <norm>Value</norm>
+      </field>
+      <field>
+        <name>os.version</name>
+        <value>os.version</value>
+        <norm>Value</norm>
+      </field>
+      <field>
+        <name>os.arch</name>
+        <value>os.arch</value>
+        <norm>Value</norm>
+      </field>
+      <field>
+        <name>user.country</name>
+        <value>user.country</value>
+        <norm>Value</norm>
+      </field>
+      <field>
+        <name>user.language</name>
+        <value>user.language</value>
+        <norm>Value</norm>
+      </field>
+      <field>
+        <name>user.home</name>
+        <value>user.home</value>
+        <norm>Value</norm>
+      </field>
+      <field>
+        <name>KETTLE_HOME</name>
+        <value>KETTLE_HOME</value>
+        <norm>Value</norm>
+      </field>
+      <field>
+        <name>pentaho.solutionpath</name>
+        <value>pentaho.solutionpath</value>
+        <norm>Value</norm>
+      </field>
+      <field>
+        <name>Internal.Transformation.Filename.Directory</name>
+        <value>Internal.Transformation.Filename.Directory</value>
+        <norm>Value</norm>
+      </field>
+      <field>
+        <name>Internal.Transformation.Filename.Name</name>
+        <value>Internal.Transformation.Filename.Name</value>
+        <norm>Value</norm>
+      </field>
+    </fields>
+    <cluster_schema />
     <remotesteps>
       <input>
       </input>
@@ -598,24 +800,23 @@
       </output>
     </remotesteps>
     <GUI>
-      <xloc>264</xloc>
-      <yloc>264</yloc>
+      <xloc>337</xloc>
+      <yloc>154</yloc>
       <draw>Y</draw>
     </GUI>
-    </step>
-
+  </step>
   <step>
-    <name>Output</name>
+    <name>result</name>
     <type>Dummy</type>
-    <description/>
+    <description />
     <distribute>Y</distribute>
-    <custom_distribution/>
+    <custom_distribution />
     <copies>1</copies>
     <partitioning>
       <method>none</method>
-      <schema_name/>
+      <schema_name />
     </partitioning>
-    <cluster_schema/>
+    <cluster_schema />
     <remotesteps>
       <input>
       </input>
@@ -623,12 +824,11 @@
       </output>
     </remotesteps>
     <GUI>
-      <xloc>681</xloc>
-      <yloc>253</yloc>
+      <xloc>530</xloc>
+      <yloc>154</yloc>
       <draw>Y</draw>
     </GUI>
-    </step>
-
+  </step>
   <step_error_handling>
   </step_error_handling>
   <slave-step-copy-partition-distribution>

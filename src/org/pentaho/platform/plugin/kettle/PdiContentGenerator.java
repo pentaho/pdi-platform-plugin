@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+* Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
@@ -22,12 +22,18 @@ import java.io.OutputStream;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
+import org.pentaho.platform.engine.core.audit.AuditHelper;
+import org.pentaho.platform.engine.core.audit.MessageTypes;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.services.messages.Messages;
 import org.pentaho.platform.util.messages.LocaleHelper;
 import org.pentaho.platform.web.http.api.resources.FileResourceContentGenerator;
 
 public class PdiContentGenerator extends FileResourceContentGenerator {
+
+  private static final long serialVersionUID = 3654713863075785759L;
   private static final Log logger = LogFactory.getLog( PdiContentGenerator.class );
   private OutputStream out;
   private RepositoryFile repositoryFile;
@@ -45,20 +51,29 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
 
   public void execute() throws Exception {
 
+    String pdiPath = repositoryFile.getPath();
     // Test
-    pdiComponent.setDirectory( FilenameUtils.getPathNoEndSeparator( repositoryFile.getPath() ) );
+    pdiComponent.setDirectory( FilenameUtils.getPathNoEndSeparator( pdiPath ) );
 
     // see if we are running a transformation or job
     if ( repositoryFile.getName().toLowerCase().endsWith( ".ktr" ) ) { //$NON-NLS-1$
-      pdiComponent.setTransformation( FilenameUtils.getBaseName( repositoryFile.getPath() ) );
+      pdiComponent.setTransformation( FilenameUtils.getBaseName( pdiPath ) );
     } else if ( repositoryFile.getName().toLowerCase().endsWith( ".kjb" ) ) { //$NON-NLS-1$
-      pdiComponent.setJob( FilenameUtils.getBaseName( repositoryFile.getPath() ) );
+      pdiComponent.setJob( FilenameUtils.getBaseName( pdiPath ) );
     }
-
+    IPentahoSession session = PentahoSessionHolder.getSession();
+    long start = System.currentTimeMillis();
     try {
+      AuditHelper.audit( session.getId(), session.getName(), pdiPath, getObjectName(), this.getClass().getName(),
+          MessageTypes.INSTANCE_START, instanceId, "", 0, this ); //$NON-NLS-1$
       // now execute
       pdiComponent.execute();
+      AuditHelper.audit( session.getId(), session.getName(), pdiPath, getObjectName(), this.getClass().getName(),
+          MessageTypes.INSTANCE_END, instanceId, "", ( (float) ( System.currentTimeMillis() - start ) / 1000 ), this ); //$NON-NLS-1$
     } catch ( Exception ex ) {
+      AuditHelper.audit( session.getId(), session.getName(), pdiPath, getObjectName(), this.getClass().getName(),
+          MessageTypes.INSTANCE_FAILED, instanceId, "", ( (float) ( System.currentTimeMillis() - start ) / 1000 ), this ); // $NON-NLS-1$
+      logger.error( ex );
       clearOutputBuffer();
       throw ex;
     }
@@ -67,8 +82,11 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
     // and not thrown back
     if ( pdiComponent.isTransPrepareExecutionFailed() ) {
       clearOutputBuffer();
-      throw new Exception( Messages.getInstance().getErrorString(
-          "Kettle.ERROR_0011_TRANSFORMATION_PREPARATION_FAILED" ) );
+      String errorMessage = Messages.getInstance().getErrorString( "Kettle.ERROR_0011_TRANSFORMATION_PREPARATION_FAILED" );
+      AuditHelper.audit( session.getId(), session.getName(), pdiPath, getObjectName(), this.getClass().getName(),
+          MessageTypes.INSTANCE_FAILED, instanceId, errorMessage,
+          ( (float) ( System.currentTimeMillis() - start ) / 1000 ), this ); // $NON-NLS-1$
+      throw new Exception( errorMessage );
     }
 
     /**
