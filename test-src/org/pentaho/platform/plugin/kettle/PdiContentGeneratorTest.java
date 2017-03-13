@@ -12,11 +12,12 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+* Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertTrue;
@@ -40,14 +41,16 @@ import org.pentaho.platform.repository2.unified.fs.FileSystemBackedUnifiedReposi
 import org.pentaho.platform.engine.services.solution.SolutionEngine;
 import org.pentaho.platform.scheduler2.quartz.QuartzScheduler;
 import org.pentaho.platform.api.scheduler2.IScheduler;
-import org.pentaho.platform.engine.core.system.PentahoSystem;
-import org.pentaho.platform.api.engine.IPentahoDefinableObjectFactory.Scope;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.platform.engine.services.messages.Messages;
 
 public class PdiContentGeneratorTest {
+
+  private static final String SOLUTION_REPOSITORY = "test-src/solution";
+
+  MicroPlatform mp = new MicroPlatform( SOLUTION_REPOSITORY );
 
   private PdiContentGenerator pdiContentGenerator;
   private OutputStream outputStream;
@@ -58,10 +61,10 @@ public class PdiContentGeneratorTest {
   @Before
   public void setUp() throws Exception {
     System.setProperty( "java.naming.factory.initial", "org.osjava.sj.SimpleContextFactory" ); //$NON-NLS-1$ //$NON-NLS-2$
-    System.setProperty( "org.osjava.sj.root", "test-src/simple-jndi" ); //$NON-NLS-1$ //$NON-NLS-2$
+    System.setProperty( "org.osjava.sj.root", SOLUTION_REPOSITORY ); //$NON-NLS-1$ //$NON-NLS-2$
     System.setProperty( "org.osjava.sj.delimiter", "/" ); //$NON-NLS-1$ //$NON-NLS-2$
 
-    System.setProperty( "PENTAHO_SYS_CFG_PATH", new File( "test-src/solution/pentaho.xml" ).getAbsolutePath() ); //$NON-NLS-2$
+    System.setProperty( "PENTAHO_SYS_CFG_PATH", new File( SOLUTION_REPOSITORY + "/pentaho.xml" ).getAbsolutePath() ); //$NON-NLS-2$
 
     IPentahoSession session = new StandaloneSession();
     PentahoSessionHolder.setSession( session );
@@ -80,27 +83,36 @@ public class PdiContentGeneratorTest {
     scheduler = new QuartzScheduler();
     scheduler.start();
 
-    MicroPlatform mp = new MicroPlatform( "test-src/solution" );
     mp.define( IUserRoleListService.class, StubUserRoleListService.class );
     mp.define( UserDetailsService.class, StubUserDetailService.class );
     mp.defineInstance( IAuthorizationPolicy.class, new TestAuthorizationPolicy() );
     mp.defineInstance( IScheduler.class, scheduler );
 
     mp.define( ISolutionEngine.class, SolutionEngine.class );
-    mp.define( IUnifiedRepository.class, FileSystemBackedUnifiedRepository.class, Scope.GLOBAL );
-    FileSystemBackedUnifiedRepository repo =
-        (FileSystemBackedUnifiedRepository) PentahoSystem.get( IUnifiedRepository.class );
-    repo.setRootDir( new File( "test-src/solution" ) );
+    FileSystemBackedUnifiedRepository repo =  new FileSystemBackedUnifiedRepository( SOLUTION_REPOSITORY );
+    mp.defineInstance(  IUnifiedRepository.class, repo );
 
     mp.start();
+  }
 
+  @After
+  public void tearDown() {
+    mp.stop();
   }
 
   @Test
-  public void testExecuteSuccess() {
-    when( repositoryFile.getPath() ).thenReturn( "test-src/solution/pdi/sample_success.ktr" );
-    when( repositoryFile.getName() ).thenReturn( "sample_success.ktr" );
+  public void testExecuteSuccess_KTR() {
+    testExecuteSuccess( "/org/pentaho/platform/plugin/kettle/PdiContentGeneratorTest_success.ktr", "PdiContentGeneratorTest_success.ktr" );
+  }
 
+  @Test
+  public void testExecuteSuccess_KJB() {
+    testExecuteSuccess( "/org/pentaho/platform/plugin/kettle/PdiContentGeneratorTest_success.kjb", "PdiContentGeneratorTest_success.kjb" );
+  }
+
+  private void testExecuteSuccess(  String path, String name  ) {
+    when( repositoryFile.getPath() ).thenReturn( path );
+    when( repositoryFile.getName() ).thenReturn( name );
     try {
       pdiContentGenerator.execute();
       String output = pdiContentGenerator.getOutputStringBuffer().toString();
@@ -113,10 +125,18 @@ public class PdiContentGeneratorTest {
   }
 
   @Test
-  public void testExecuteFailure() {
-    when( repositoryFile.getPath() ).thenReturn( "test-src/solution/pdi/samplePrepExecutionFailed.ktr" );
-    when( repositoryFile.getName() ).thenReturn( "samplePrepExecutionFailed.ktr" );
+  public void testExecuteFailure_KTR() {
+    testExecuteFailure( "/org/pentaho/platform/plugin/kettle/PdiContentGeneratorTest_fail.ktr", "PdiContentGeneratorTest_fail.ktr" );
+  }
 
+  @Test
+  public void testExecuteFailure_KJB() {
+    testExecuteFailure( "/org/pentaho/platform/plugin/kettle/PdiContentGeneratorTest_fail.kjb", "PdiContentGeneratorTest_fail.kjb" );
+  }
+
+  private void testExecuteFailure( String path, String name ) {
+    when( repositoryFile.getPath() ).thenReturn( path );
+    when( repositoryFile.getName() ).thenReturn( name );
     try {
       pdiContentGenerator.execute();
     } catch ( Exception ex ) {
@@ -130,7 +150,6 @@ public class PdiContentGeneratorTest {
 
     @Override
     public List<String> getAllowedActions( String arg0 ) {
-      // TODO Auto-generated method stub
       allowedActions.add( "org.pentaho.repository.read" );
       allowedActions.add( "org.pentaho.repository.create" );
       return allowedActions;
@@ -138,10 +157,8 @@ public class PdiContentGeneratorTest {
 
     @Override
     public boolean isAllowed( String arg0 ) {
-      // TODO Auto-generated method stub
       return true;
     }
-
   }
 
 }
