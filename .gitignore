@@ -21,3 +21,4 @@ build-res/module-scripts/
 *.ear
 *.iml
 /dev-lib
+/target/
