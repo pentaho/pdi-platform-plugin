@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Rows>
- <Row><REGION>Central</REGION> <DEPARTMENT>Sales</DEPARTMENT> <POSITIONTITLE>Account Executive</POSITIONTITLE> <Hello>Hello, Account Executive</Hello> </Row>
- <Row><REGION>Central</REGION> <DEPARTMENT>Sales</DEPARTMENT> <POSITIONTITLE>District Manager</POSITIONTITLE> <Hello>Hello, District Manager</Hello> </Row>
- <Row><REGION>Central</REGION> <DEPARTMENT>Sales</DEPARTMENT> <POSITIONTITLE>Pre-Sales</POSITIONTITLE> <Hello>Hello, Pre-Sales</Hello> </Row>
- <Row><REGION>Central</REGION> <DEPARTMENT>Sales</DEPARTMENT> <POSITIONTITLE>Sales Rep</POSITIONTITLE> <Hello>Hello, Sales Rep</Hello> </Row>
- <Row><REGION>Central</REGION> <DEPARTMENT>Sales</DEPARTMENT> <POSITIONTITLE>Senior Sales Rep</POSITIONTITLE> <Hello>Hello, Senior Sales Rep</Hello> </Row>
-</Rows>
