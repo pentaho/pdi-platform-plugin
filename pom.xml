@@ -20,6 +20,7 @@
   </modules>
   
   <properties>
+    <license.licenseName>lgpl_v2_1</license.licenseName>
     <!-- Kettle dependencies -->
     <!-- Pentaho dependencies -->
     <!-- Third-party dependencies -->

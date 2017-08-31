@@ -15,14 +15,8 @@
   </files>
   <fileSets>
     <fileSet>
-      <directory>src/main</directory>  
+      <directory>${project.basedir}/src/main/resources</directory>
       <outputDirectory>.</outputDirectory>
-    </fileSet>
-    <fileSet>
-      <outputDirectory>lib</outputDirectory>
-      <excludes>
-        <exclude>*/**</exclude>
-      </excludes>
     </fileSet>
   </fileSets>
   <dependencySets>

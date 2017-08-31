@@ -17,6 +17,7 @@
 
 package org.pentaho.platform.plugin.kettle;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.log4j.Appender;
 import org.apache.log4j.Layout;
 import org.apache.log4j.spi.ErrorHandler;
@@ -26,17 +27,16 @@ import org.pentaho.di.core.logging.DefaultLogLevel;
 import org.pentaho.di.core.logging.KettleLoggingEvent;
 import org.pentaho.di.core.logging.LoggingBuffer;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class LoggingBufferAppender implements Appender {
   private final LoggingBuffer loggingBuffer;
-  
-  public LoggingBufferAppender(LoggingBuffer loggingBuffer) {
+
+  public LoggingBufferAppender( LoggingBuffer loggingBuffer ) {
     this.loggingBuffer = loggingBuffer;
   }
 
   @Override
-  public void addFilter(Filter arg0) {
+  public void addFilter( Filter arg0 ) {
     throw new NotImplementedException();
   }
 
@@ -51,9 +51,9 @@ public class LoggingBufferAppender implements Appender {
   }
 
   @Override
-  public void doAppend(LoggingEvent event) {
-    KettleLoggingEvent kle = new KettleLoggingEvent(event.getMessage(), System.currentTimeMillis(), DefaultLogLevel.getLogLevel());
-    loggingBuffer.doAppend(kle);
+  public void doAppend( LoggingEvent event ) {
+    KettleLoggingEvent kle = new KettleLoggingEvent( event.getMessage(), System.currentTimeMillis(), DefaultLogLevel.getLogLevel() );
+    loggingBuffer.doAppend( kle );
   }
 
   @Override
@@ -82,17 +82,17 @@ public class LoggingBufferAppender implements Appender {
   }
 
   @Override
-  public void setErrorHandler(ErrorHandler errorHandler) {
+  public void setErrorHandler( ErrorHandler errorHandler ) {
     throw new NotImplementedException();
   }
 
   @Override
-  public void setLayout(Layout layout) {
+  public void setLayout( Layout layout ) {
     throw new NotImplementedException();
   }
 
   @Override
-  public void setName(String name) {
-    loggingBuffer.setName(name);
+  public void setName( String name ) {
+    loggingBuffer.setName( name );
   }
 }

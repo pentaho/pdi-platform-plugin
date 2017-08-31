@@ -97,6 +97,7 @@ public class PdiActionTest {
   @After
   public void tearDown() {
     mp.stop();
+    FileUtils.deleteQuietly( new File( "testTransformationVariableOverrides.out.txt" ) );
   }
 
   @Test( expected = Exception.class )
@@ -208,14 +209,14 @@ public class PdiActionTest {
     assertNotNull( rows );
 
     String log = component.getLog();
-    assertTrue( log.indexOf( "Injector" ) != -1 );
-    assertTrue( log.indexOf( "R=1" ) != -1 );
-    assertTrue( log.indexOf( "Filter rows" ) != -1 );
-    assertTrue( log.indexOf( "W=1" ) != -1 );
-    assertTrue( log.indexOf( "Java Script Value" ) != -1 );
-    assertTrue( log.indexOf( "W=1" ) != -1 );
-    assertTrue( log.indexOf( "Output" ) != -1 );
-    assertTrue( log.indexOf( "W=4" ) != -1 );
+    assertTrue( log.contains( "Injector" ) );
+    assertTrue( log.contains( "R=1" ) );
+    assertTrue( log.contains( "Filter rows" ) );
+    assertTrue( log.contains( "W=1" ) );
+    assertTrue( log.contains( "Java Script Value" ) );
+    assertTrue( log.contains( "W=1" ) );
+    assertTrue( log.contains( "Output" ) );
+    assertTrue( log.contains( "W=4" ) );
   }
 
   @Test

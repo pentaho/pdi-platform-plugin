@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<plugin title="Kettle Platform Plugin" name="pentaho-pdi-platform-plugin">
+<plugin title="Kettle Platform Plugin" name="pdi-platform-plugin">
 
    <lifecycle-listener class="org.pentaho.platform.plugin.kettle.PdiLifecycleListener"/>
 
