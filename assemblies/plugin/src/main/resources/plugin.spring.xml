@@ -32,7 +32,6 @@
   <bean id="kjb.backgroundExecution" class="org.pentaho.platform.plugin.kettle.PdiAction" scope="prototype"/>
   
   <bean id="PdiAction" class="org.pentaho.platform.plugin.kettle.PdiAction" scope="prototype"/>
-  <bean id="IPdiContentProvider" class="com.pentaho.repository.importexport.PdiContentProvider" scope="prototype"/>
   
   <bean class="org.pentaho.platform.plugin.kettle.security.policy.rolebased.actions.RepositoryExecuteAction">
     <pen:publish as-type="INTERFACES">
