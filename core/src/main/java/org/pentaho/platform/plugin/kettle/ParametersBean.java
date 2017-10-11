@@ -1,7 +1,7 @@
 /**
- * The Pentaho proprietary code is licensed under the terms and conditions
+ * The Hitachi Vantara proprietary code is licensed under the terms and conditions
  * of the software license agreement entered into between the entity licensing
- * such code and Pentaho Corporation. 
+ * such code and Hitachi Vantara. 
  */
 package org.pentaho.platform.plugin.kettle;
 
