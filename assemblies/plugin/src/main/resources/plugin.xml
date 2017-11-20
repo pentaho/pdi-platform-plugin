@@ -19,7 +19,6 @@
         <title>Kettle Transformation</title>
         <description>Pentaho Data Integration Transformation</description>
         <icon-url>content/pdi-platform-plugin/resources/images/transformation.png</icon-url>
-        <meta-provider>org.pentaho.platform.plugin.kettle.PdiFileInfo</meta-provider>
         <operations>
           <!-- for any of these urls, you can add layout=flow to the url -->
           <operation>
@@ -50,7 +49,6 @@
         <title>Kettle Job</title>
         <description>Pentaho Data Integration Job</description>
         <icon-url>content/pdi-platform-plugin/resources/images/job.png</icon-url>
-        <meta-provider>org.pentaho.platform.plugin.kettle.PdiFileInfo</meta-provider>
         <operations>
           <!-- for any of these urls, you can add layout=flow to the url -->
           <operation>
