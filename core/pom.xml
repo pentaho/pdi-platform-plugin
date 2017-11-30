@@ -18,8 +18,8 @@
   <name>Kettle Platform Plugin</name>
 
   <properties>
-    <kettle.version>8.1-SNAPSHOT</kettle.version>
-    <pentaho.platform.version>8.1-SNAPSHOT</pentaho.platform.version>
+    <pdi.version>8.1-SNAPSHOT</pdi.version>
+    <platform.version>8.1-SNAPSHOT</platform.version>
   </properties>
 
   <dependencies>
@@ -27,44 +27,44 @@
     <dependency>
       <groupId>pentaho-kettle</groupId>
       <artifactId>kettle-engine</artifactId>
-      <version>${kettle.version}</version>
+      <version>${pdi.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>pentaho-kettle</groupId>
       <artifactId>kettle-core</artifactId>
-      <version>${kettle.version}</version>
+      <version>${pdi.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.pentaho.di.plugins</groupId>
       <artifactId>kettle-log4j-core</artifactId>
-      <version>${kettle.version}</version>
+      <version>${pdi.version}</version>
       <scope>provided</scope>
     </dependency>
     <!-- Pentaho dependencies -->
     <dependency>
       <groupId>pentaho</groupId>
       <artifactId>pentaho-platform-api</artifactId>
-      <version>${pentaho.platform.version}</version>
+      <version>${platform.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>pentaho</groupId>
       <artifactId>pentaho-platform-core</artifactId>
-      <version>${pentaho.platform.version}</version>
+      <version>${platform.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>pentaho</groupId>
       <artifactId>pentaho-platform-repository</artifactId>
-      <version>${pentaho.platform.version}</version>
+      <version>${platform.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>pentaho</groupId>
       <artifactId>pentaho-platform-extensions</artifactId>
-      <version>${pentaho.platform.version}</version>
+      <version>${platform.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -72,7 +72,7 @@
     <dependency>
       <groupId>pentaho</groupId>
       <artifactId>pentaho-platform-core</artifactId>
-      <version>${pentaho.platform.version}</version>
+      <version>${platform.version}</version>
       <classifier>tests</classifier>
       <scope>test</scope>
     </dependency>
