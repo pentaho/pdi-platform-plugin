@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+* Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
@@ -78,9 +78,9 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
       throw ex;
     }
 
-    // Verify if the transformation prepareExecution failed, as this exception is logged
+    // Verify if the transformation prepareExecution failed or if there is any error in execution, as this exception is logged
     // and not thrown back
-    if ( pdiComponent.isTransPrepareExecutionFailed() ) {
+    if ( !pdiComponent.isExecutionSuccessful() ) {
       clearOutputBuffer();
       String errorMessage = Messages.getInstance().getErrorString( "Kettle.ERROR_0011_TRANSFORMATION_PREPARATION_FAILED" );
       AuditHelper.audit( session.getId(), session.getName(), pdiPath, getObjectName(), this.getClass().getName(),

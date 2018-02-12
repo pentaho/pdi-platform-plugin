@@ -22,7 +22,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertTrue;
-
+import static org.junit.Assert.assertFalse;
 import org.pentaho.commons.connection.IPentahoResultSet;
 import org.pentaho.commons.connection.memory.MemoryMetaData;
 import org.pentaho.commons.connection.memory.MemoryResultSet;
@@ -52,7 +52,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.*;
 
 public class PdiActionTest {
 
@@ -321,6 +320,22 @@ public class PdiActionTest {
 
       action.execute();
       assertTrue( action.isTransPrepareExecutionFailed() );
+    } catch ( Exception e ) {
+      e.printStackTrace();
+      fail( "Exception is thrown: " + e.getLocalizedMessage() );
+    }
+  }
+
+  @Test
+  public void testExecutionSuccessful() {
+    try {
+      PdiAction action = new PdiAction();
+      action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
+      action.setDirectory( SOLUTION_REPOSITORY );
+      action.setTransformation( "/org/pentaho/platform/plugin/kettle/PdiActionTest_testTransformationExecutionFailure.ktr" );
+
+      action.execute();
+      assertFalse( action.isExecutionSuccessful() );
     } catch ( Exception e ) {
       e.printStackTrace();
       fail( "Exception is thrown: " + e.getLocalizedMessage() );
