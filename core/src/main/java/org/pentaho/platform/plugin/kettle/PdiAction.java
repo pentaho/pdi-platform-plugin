@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+* Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
@@ -1133,5 +1133,27 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
 
   public boolean isTransPrepareExecutionFailed() {
     return transPrepExecutionFailure;
+  }
+
+  /**
+   * Checks to see if there is any error in preparation of KTR or if there are any errors
+   * while executing the ktr/kjb
+   * @return true if the execution was success, false otherwise
+   */
+  public boolean isExecutionSuccessful() {
+    boolean isSuccess = true;
+    //Check if prevalidation failed
+    isSuccess = !isTransPrepareExecutionFailed();
+    if ( isSuccess ) {
+      //Check if the transformation or jobs have step error
+      if ( localTrans != null && localTrans.getErrors() > 0 ) {
+        isSuccess = false;
+      }
+      //Check if the transformation or jobs have step error
+      if ( localJob != null && localJob.getErrors() > 0 ) {
+        isSuccess = false;
+      }
+    }
+    return isSuccess;
   }
 }
