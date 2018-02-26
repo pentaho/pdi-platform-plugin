@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.commons.connection.IPentahoResultSet;
@@ -50,6 +51,7 @@ import org.pentaho.di.job.Job;
 import org.pentaho.di.job.JobConfiguration;
 import org.pentaho.di.job.JobExecutionConfiguration;
 import org.pentaho.di.job.JobMeta;
+import org.pentaho.di.job.entry.JobEntryCopy;
 import org.pentaho.di.repository.RepositoriesMeta;
 import org.pentaho.di.repository.Repository;
 import org.pentaho.di.repository.RepositoryMeta;
@@ -156,6 +158,9 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
   private String clearLog;
   private String runSafeMode;
   private String runClustered;
+  private String gatheringMetrics;
+  private String expandingRemoteJob;
+  private String startCopyName;
 
   // When the Transformation prepare execution fails, the exception is logged and not thrown to the caller. Adding a
   // flag to indicate the success/failure of this steps
@@ -464,7 +469,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     localTrans = null;
 
     if ( transMeta != null ) {
-      TransExecutionConfiguration transExConfig = new TransExecutionConfiguration();
+      TransExecutionConfiguration transExConfig = newTransExecutionConfiguration();
       if ( logLevel != null ) {
         transExConfig.setLogLevel( LogLevel.getLogLevelForCode( logLevel ) );
       }
@@ -474,9 +479,12 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
       if ( runSafeMode != null ) {
         transExConfig.setSafeModeEnabled( Boolean.valueOf( runSafeMode ) );
       }
+      if ( gatheringMetrics != null ) {
+        transExConfig.setGatheringMetrics( Boolean.valueOf( gatheringMetrics ) );
+      }
 
       try {
-        localTrans = new Trans( transMeta );
+        localTrans = newTrans( transMeta );
         localTrans.setArguments( arguments );
         localTrans.shareVariablesWith( transMeta );
         String carteObjectId = UUID.randomUUID().toString();
@@ -611,6 +619,26 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     }
   }
 
+  @VisibleForTesting
+  TransExecutionConfiguration newTransExecutionConfiguration() {
+    return new TransExecutionConfiguration();
+  }
+
+  @VisibleForTesting
+  Trans newTrans( TransMeta transMeta ) {
+    return new Trans( transMeta );
+  }
+
+  @VisibleForTesting
+  JobExecutionConfiguration newJobExecutionConfiguration() {
+    return new JobExecutionConfiguration();
+  }
+
+  @VisibleForTesting
+  Job newJob( Repository repository, JobMeta jobMeta ) {
+    return new Job( repository, jobMeta );
+  }
+
   /**
    * Registers this component as a step listener of a transformation. This allows this component to receive rows of data
    * from the transformation when it executes. These rows are made available to other components in the action sequence
@@ -699,7 +727,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     localJob = null;
 
     if ( jobMeta != null ) {
-      JobExecutionConfiguration jobExConfig = new JobExecutionConfiguration();
+      JobExecutionConfiguration jobExConfig = newJobExecutionConfiguration();
       if ( logLevel != null ) {
         jobExConfig.setLogLevel( LogLevel.getLogLevelForCode( logLevel ) );
       }
@@ -709,9 +737,15 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
       if ( runSafeMode != null ) {
         jobExConfig.setSafeModeEnabled( Boolean.valueOf( runSafeMode ) );
       }
+      if ( expandingRemoteJob != null ) {
+        jobExConfig.setExpandingRemoteJob( Boolean.valueOf( expandingRemoteJob ) );
+      }
+      if ( startCopyName != null ) {
+        jobExConfig.setStartCopyName( startCopyName );
+      }
 
       try {
-        localJob = new Job( repository, jobMeta );
+        localJob = newJob( repository, jobMeta );
         localJob.setArguments( arguments );
         localJob.shareVariablesWith( jobMeta );
         String carteObjectId = UUID.randomUUID().toString();
@@ -738,6 +772,10 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
           log.debug( Messages.getInstance().getString( "Kettle.DEBUG_STARTING_JOB" ) ); //$NON-NLS-1$
         }
 
+        if ( startCopyName != null ) {
+          JobEntryCopy startJobEntryCopy = jobMeta.findJobEntry( startCopyName );
+          localJob.setStartJobEntryCopy( startJobEntryCopy );
+        }
         localJob.setLogLevel( LogLevel.getLogLevelForCode( logLevel ) );
         localJob.start();
 
@@ -1133,6 +1171,30 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
 
   public boolean isTransPrepareExecutionFailed() {
     return transPrepExecutionFailure;
+  }
+
+  public String getGatheringMetrics() {
+    return gatheringMetrics;
+  }
+
+  public void setGatheringMetrics( String gatheringMetrics ) {
+    this.gatheringMetrics = gatheringMetrics;
+  }
+
+  public String getExpandingRemoteJob() {
+    return expandingRemoteJob;
+  }
+
+  public void setExpandingRemoteJob( String expandingRemoteJob ) {
+    this.expandingRemoteJob = expandingRemoteJob;
+  }
+
+  public String getStartCopyName() {
+    return startCopyName;
+  }
+
+  public void setStartCopyName( String startCopyName ) {
+    this.startCopyName = startCopyName;
   }
 
   /**
