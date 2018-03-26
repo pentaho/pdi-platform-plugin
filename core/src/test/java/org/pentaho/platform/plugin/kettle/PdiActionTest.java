@@ -12,12 +12,13 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+* Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,7 +27,17 @@ import static org.junit.Assert.assertTrue;
 import org.pentaho.commons.connection.IPentahoResultSet;
 import org.pentaho.commons.connection.memory.MemoryMetaData;
 import org.pentaho.commons.connection.memory.MemoryResultSet;
+import org.pentaho.di.core.Result;
+import org.pentaho.di.core.logging.LogLevel;
+import org.pentaho.di.core.logging.LogWriter;
+import org.pentaho.di.job.Job;
+import org.pentaho.di.job.JobExecutionConfiguration;
+import org.pentaho.di.job.JobMeta;
+import org.pentaho.di.repository.Repository;
 import org.pentaho.di.repository.filerep.KettleFileRepositoryMeta;
+import org.pentaho.di.trans.Trans;
+import org.pentaho.di.trans.TransExecutionConfiguration;
+import org.pentaho.di.trans.TransMeta;
 import org.pentaho.platform.api.engine.ActionExecutionException;
 import org.pentaho.platform.api.engine.IAuthorizationPolicy;
 import org.pentaho.platform.api.engine.IPentahoSession;
@@ -52,9 +63,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doReturn;
 import static org.junit.Assert.*;
 
 public class PdiActionTest {
+
+  private static final String TEST_LOG_LEVEL_PARAM = "Rowlevel";
+  private static final String TEST_TRUE_BOOLEAN_PARAM = "true";
+  private static final String TEST_FALSE_BOOLEAN_PARAM = "false";
+  private static final String TEST_START_COPY_NAME_PARAM = "startCopyName";
 
   private QuartzScheduler scheduler;
 
@@ -325,6 +345,70 @@ public class PdiActionTest {
       e.printStackTrace();
       fail( "Exception is thrown: " + e.getLocalizedMessage() );
     }
+  }
+
+  @Test
+  public void testSetParamsIntoExecuteConfigInExecuteTrans() throws ActionExecutionException {
+    PdiAction action = spy( new PdiAction() );
+
+    TransMeta meta = mock( TransMeta.class );
+    LogWriter logWriter = mock( LogWriter.class );
+    Trans trans = mock( Trans.class );
+    Log log = mock( Log.class );
+    TransExecutionConfiguration transExecutionConfiguration = mock( TransExecutionConfiguration.class );
+
+    action.setLogger( log );
+
+    action.setLogLevel( TEST_LOG_LEVEL_PARAM );
+    action.setClearLog( TEST_TRUE_BOOLEAN_PARAM );
+    action.setRunSafeMode( TEST_FALSE_BOOLEAN_PARAM );
+    action.setGatheringMetrics( TEST_FALSE_BOOLEAN_PARAM );
+
+    doReturn( trans ).when( action ).newTrans( meta );
+    doReturn( true ).when( action ).customizeTrans( trans, logWriter );
+    doReturn( false ).when( log ).isDebugEnabled();
+    doReturn( transExecutionConfiguration ).when( action ).newTransExecutionConfiguration();
+
+    action.executeTransformation( meta, logWriter );
+
+    verify( transExecutionConfiguration ).setLogLevel( LogLevel.getLogLevelForCode( TEST_LOG_LEVEL_PARAM ) );
+    verify( transExecutionConfiguration ).setClearingLog( Boolean.valueOf( TEST_TRUE_BOOLEAN_PARAM ) );
+    verify( transExecutionConfiguration ).setSafeModeEnabled( Boolean.valueOf( TEST_FALSE_BOOLEAN_PARAM ) );
+    verify( transExecutionConfiguration ).setGatheringMetrics( Boolean.valueOf( TEST_FALSE_BOOLEAN_PARAM ) );
+  }
+
+  @Test
+  public void testSetParamsIntoExecuteConfigInExecuteJob() throws ActionExecutionException {
+    PdiAction action = spy( new PdiAction() );
+
+    JobMeta meta = mock( JobMeta.class );
+    Repository repository = mock( Repository.class );
+    LogWriter logWriter = mock( LogWriter.class );
+    Job job = mock( Job.class );
+    Log log = mock( Log.class );
+    JobExecutionConfiguration jobExecutionConfiguration = mock( JobExecutionConfiguration.class );
+    Result result = mock( Result.class );
+
+    action.setLogger( log );
+
+    action.setLogLevel( TEST_LOG_LEVEL_PARAM );
+    action.setClearLog( TEST_TRUE_BOOLEAN_PARAM );
+    action.setRunSafeMode( TEST_FALSE_BOOLEAN_PARAM );
+    action.setExpandingRemoteJob( TEST_FALSE_BOOLEAN_PARAM );
+    action.setStartCopyName( TEST_START_COPY_NAME_PARAM );
+
+    doReturn( job ).when( action ).newJob( repository, meta );
+    doReturn( false ).when( log ).isDebugEnabled();
+    doReturn( jobExecutionConfiguration ).when( action ).newJobExecutionConfiguration();
+    doReturn( result ).when( job ).getResult();
+
+    action.executeJob( meta, repository, logWriter );
+
+    verify( jobExecutionConfiguration ).setLogLevel( LogLevel.getLogLevelForCode( TEST_LOG_LEVEL_PARAM ) );
+    verify( jobExecutionConfiguration ).setClearingLog( Boolean.valueOf( TEST_TRUE_BOOLEAN_PARAM ) );
+    verify( jobExecutionConfiguration ).setSafeModeEnabled( Boolean.valueOf( TEST_FALSE_BOOLEAN_PARAM ) );
+    verify( jobExecutionConfiguration ).setExpandingRemoteJob( Boolean.valueOf( TEST_FALSE_BOOLEAN_PARAM ) );
+    verify( jobExecutionConfiguration ).setStartCopyName( TEST_START_COPY_NAME_PARAM );
   }
 
   public class TestAuthorizationPolicy implements IAuthorizationPolicy {
