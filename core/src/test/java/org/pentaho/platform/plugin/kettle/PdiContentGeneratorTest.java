@@ -31,6 +31,7 @@ import java.util.List;
 
 import org.pentaho.di.repository.filerep.KettleFileRepositoryMeta;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
+import org.pentaho.platform.plugin.kettle.messages.Messages;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 import org.pentaho.platform.api.engine.IUserRoleListService;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -44,7 +45,6 @@ import org.pentaho.platform.api.scheduler2.IScheduler;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
-import org.pentaho.platform.engine.services.messages.Messages;
 
 public class PdiContentGeneratorTest {
 
@@ -116,7 +116,7 @@ public class PdiContentGeneratorTest {
     try {
       pdiContentGenerator.execute();
       String output = pdiContentGenerator.getOutputStringBuffer().toString();
-      assertTrue( output.contains( Messages.getInstance().getString( "MessageFormatter.USER_ACTION_SUCCESSFUL" ) ) );
+      assertTrue( output.contains( Messages.getInstance().getString( "PdiAction.STATUS_SUCCESS_HEADING" ) ) );
     } catch ( Exception ex ) {
       // There should be no exception throws in this case
       ex.printStackTrace();
