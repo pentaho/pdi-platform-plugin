@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+* Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
@@ -31,6 +31,7 @@ import java.util.List;
 
 import org.pentaho.di.repository.filerep.KettleFileRepositoryMeta;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
+import org.pentaho.platform.plugin.kettle.messages.Messages;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 import org.pentaho.platform.api.engine.IUserRoleListService;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -44,7 +45,6 @@ import org.pentaho.platform.api.scheduler2.IScheduler;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
-import org.pentaho.platform.engine.services.messages.Messages;
 
 public class PdiContentGeneratorTest {
 
@@ -115,8 +115,8 @@ public class PdiContentGeneratorTest {
     when( repositoryFile.getName() ).thenReturn( path );
     try {
       pdiContentGenerator.execute();
-      String output = pdiContentGenerator.getOutputStringBuffer().toString();
-      assertTrue( output.contains( Messages.getInstance().getString( "MessageFormatter.USER_ACTION_SUCCESSFUL" ) ) );
+      String output = pdiContentGenerator.getOutputStringBuilder().toString();
+      assertTrue( output.contains( Messages.getInstance().getString( "PdiAction.STATUS_SUCCESS_HEADING" ) ) );
     } catch ( Exception ex ) {
       // There should be no exception throws in this case
       ex.printStackTrace();

@@ -27,8 +27,8 @@ import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.audit.AuditHelper;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.services.messages.Messages;
-import org.pentaho.platform.util.messages.LocaleHelper;
 import org.pentaho.platform.web.http.api.resources.FileResourceContentGenerator;
 
 public class PdiContentGenerator extends FileResourceContentGenerator {
@@ -38,7 +38,7 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
   private OutputStream out;
   private RepositoryFile repositoryFile;
   private PdiAction pdiComponent;
-  private StringBuffer outputStringBuffer;
+  private StringBuilder outputStringBuilder;
 
   public String getMimeType( String streamPropertyName ) {
     return "text/html";
@@ -46,7 +46,7 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
 
   public PdiContentGenerator() {
     pdiComponent = new PdiAction();
-    outputStringBuffer = new StringBuffer();
+    outputStringBuilder = new StringBuilder();
   }
 
   public void execute() throws Exception {
@@ -80,13 +80,23 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
 
     // Verify if the transformation prepareExecution failed or if there is any error in execution, as this exception is logged
     // and not thrown back
+    org.pentaho.platform.plugin.kettle.messages.Messages pdiPluginMessages = org.pentaho.platform.plugin.kettle.messages.Messages.getInstance();
     if ( !pdiComponent.isExecutionSuccessful() ) {
       clearOutputBuffer();
       String errorMessage = Messages.getInstance().getErrorString( "Kettle.ERROR_0011_TRANSFORMATION_PREPARATION_FAILED" );
       AuditHelper.audit( session.getId(), session.getName(), pdiPath, getObjectName(), this.getClass().getName(),
           MessageTypes.INSTANCE_FAILED, instanceId, errorMessage,
           ( (float) ( System.currentTimeMillis() - start ) / 1000 ), this ); // $NON-NLS-1$
-      throw new Exception( errorMessage );
+
+      String heading = pdiComponent.isTransPrepareExecutionFailed()
+              ? pdiPluginMessages.getString( "PdiAction.STATUS_NOT_RUN_HEADING" ) : pdiPluginMessages.getString( "PdiAction.STATUS_ERRORS_HEADING" );
+      String description = pdiComponent.isTransPrepareExecutionFailed()
+              ? pdiPluginMessages.getString( "PdiAction.STATUS_NOT_RUN_DESC" ) : pdiPluginMessages.getString( "PdiAction.STATUS_ERRORS_DESC" );
+
+      outputStringBuilder = formatMessage( "content/pdi-platform-plugin/resources/images/alert.svg", heading, description );
+      out.write( outputStringBuilder.toString().getBytes() );
+
+      return;
     }
 
     /**
@@ -96,10 +106,10 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
      * display the string "Action Successful" when transformation is executed successfully and display a generic error
      * page in case of exception. The detailed logging will continue to go to the log file
      */
-    outputStringBuffer = formatSuccessMessage();
-    // write the log to the output stream
-    out.write( outputStringBuffer.toString().getBytes() );
-
+    outputStringBuilder = formatMessage( "content/pdi-platform-plugin/resources/images/success.svg",
+            pdiPluginMessages.getString( "PdiAction.STATUS_SUCCESS_HEADING" ),
+            pdiPluginMessages.getString( "PdiAction.STATUS_SUCCESS_DESC" ) );
+    out.write( outputStringBuilder.toString().getBytes() );
   }
 
   /**
@@ -127,24 +137,44 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
     this.repositoryFile = repositoryFile;
   }
 
-  protected StringBuffer formatSuccessMessage() {
-    StringBuffer messageBuffer = new StringBuffer();
-    messageBuffer.append( "<html><head><title>" ) //$NON-NLS-1$
-        .append( Messages.getInstance().getString( "MessageFormatter.USER_START_ACTION" ) ) //$NON-NLS-1$
-        .append(
-            "</title><link rel=\"stylesheet\" type=\"text/css\" href=\"/pentaho-style/active/default.css\"></head>" ) //$NON-NLS-1$
-        .append( "<body dir=\"" ).append( LocaleHelper.getTextDirection() ).append( //$NON-NLS-1$
-            "\"><table cellspacing=\"10\"><tr><td class=\"portlet-section\" colspan=\"3\">" ) //$NON-NLS-1$
-        .append( Messages.getInstance().getString( "MessageFormatter.USER_ACTION_SUCCESSFUL" ) ) //$NON-NLS-1$
-        .append( "<hr size=\"1\"/></td></tr><tr><td class=\"portlet-font\" valign=\"top\">" ); //$NON-NLS-1$
+  protected StringBuilder formatMessage( String imgPath, String heading, String descriptions ) {
+    StringBuilder messageBuilder = new StringBuilder();
+    messageBuilder.append( "<html>" )
+            .append( "  <base href=\"" ).append( PentahoSystem.getApplicationContext().getFullyQualifiedServerURL() ).append( "\">" )
+            .append( "  <head>" )
+            .append( "    <script src='js/themes.js'></script>" )
+            .append( "  </head>" )
+            .append( "  <body style='width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column'; margin: 0; padding: 0>" )
+            .append( "    <div style='margin: 0 auto; width: 410px; display: flex; padding: 30px;'>" )
+            .append( "      <img src='" ).append( imgPath ).append( "' style='float: left; width: 53px; height: 48px'/>" )
+            .append( "      <div>" )
+            .append( "        <div style='font-size: 25px; font-weight: normal; padding: 0px 0px 10px 15px;'>" ).append( heading ).append( "</div>" )
+            .append( "        <div style='padding: 0px 0px 0px 15px;'>" ).append( descriptions ).append( "</div>" )
+            .append( "        <div style='padding-top: 30px; padding-left: 15px;'>" )
+            .append( "          <button type='submit' class='pentaho-button' onclick='closeStatusPage()'>Close</button>" )
+            .append( "        </div>" )
+            .append( "      </div>" )
+            .append( "    </div>" )
+            .append( "  </body>" )
+            .append( "  <script>" )
+            .append( "    var active_theme_tree = core_theme_tree[active_theme];" )
+            .append( "    document.write('<link rel=\"stylesheet\" type=\"text/css\" href=\"' + active_theme_tree.rootDir + active_theme_tree.resources[0] + '\"');" )
+            .append( "    var closeStatusPage = function() {" )
+            .append( "      if(window.parent.mantle_initialized) {" )
+            .append( "        window.parent.closeTab('');" )
+            .append( "      } else {" )
+            .append( "        window.close();" )
+            .append( "      }" )
+            .append( "    }" )
+            .append( "  </script>" )
+            .append( "</html>" );
 
-    return messageBuffer;
-
+    return messageBuilder;
   }
 
   private void clearOutputBuffer() {
-    if ( outputStringBuffer != null ) {
-      outputStringBuffer.setLength( 0 );
+    if ( outputStringBuilder != null ) {
+      outputStringBuilder.setLength( 0 );
     }
   }
 
@@ -153,7 +183,7 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
    *
    * @return
    */
-  protected StringBuffer getOutputStringBuffer() {
-    return outputStringBuffer;
+  protected StringBuilder getOutputStringBuilder() {
+    return outputStringBuilder;
   }
 }
