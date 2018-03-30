@@ -38,7 +38,7 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
   private OutputStream out;
   private RepositoryFile repositoryFile;
   private PdiAction pdiComponent;
-  private StringBuffer outputStringBuffer;
+  private StringBuilder outputStringBuilder;
 
   public String getMimeType( String streamPropertyName ) {
     return "text/html";
@@ -46,7 +46,7 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
 
   public PdiContentGenerator() {
     pdiComponent = new PdiAction();
-    outputStringBuffer = new StringBuffer();
+    outputStringBuilder = new StringBuilder();
   }
 
   public void execute() throws Exception {
@@ -93,8 +93,8 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
       String description = pdiComponent.isTransPrepareExecutionFailed()
               ? pdiPluginMessages.getString( "PdiAction.STATUS_NOT_RUN_DESC" ) : pdiPluginMessages.getString( "PdiAction.STATUS_ERRORS_DESC" );
 
-      outputStringBuffer = formatMessage( "content/pdi-platform-plugin/resources/images/alert.svg", heading, description );
-      out.write( outputStringBuffer.toString().getBytes() );
+      outputStringBuilder = formatMessage( "content/pdi-platform-plugin/resources/images/alert.svg", heading, description );
+      out.write( outputStringBuilder.toString().getBytes() );
 
       return;
     }
@@ -106,10 +106,10 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
      * display the string "Action Successful" when transformation is executed successfully and display a generic error
      * page in case of exception. The detailed logging will continue to go to the log file
      */
-    outputStringBuffer = formatMessage( "content/pdi-platform-plugin/resources/images/success.svg",
+    outputStringBuilder = formatMessage( "content/pdi-platform-plugin/resources/images/success.svg",
             pdiPluginMessages.getString( "PdiAction.STATUS_SUCCESS_HEADING" ),
             pdiPluginMessages.getString( "PdiAction.STATUS_SUCCESS_DESC" ) );
-    out.write( outputStringBuffer.toString().getBytes() );
+    out.write( outputStringBuilder.toString().getBytes() );
   }
 
   /**
@@ -137,9 +137,9 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
     this.repositoryFile = repositoryFile;
   }
 
-  protected StringBuffer formatMessage( String imgPath, String heading, String descriptions ) {
-    StringBuffer messageBuffer = new StringBuffer();
-    messageBuffer.append( "<html>" )
+  protected StringBuilder formatMessage( String imgPath, String heading, String descriptions ) {
+    StringBuilder messageBuilder = new StringBuilder();
+    messageBuilder.append( "<html>" )
             .append( "  <base href=\"" ).append( PentahoSystem.getApplicationContext().getFullyQualifiedServerURL() ).append( "\">" )
             .append( "  <head>" )
             .append( "    <script src='js/themes.js'></script>" )
@@ -169,12 +169,12 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
             .append( "  </script>" )
             .append( "</html>" );
 
-    return messageBuffer;
+    return messageBuilder;
   }
 
   private void clearOutputBuffer() {
-    if ( outputStringBuffer != null ) {
-      outputStringBuffer.setLength( 0 );
+    if ( outputStringBuilder != null ) {
+      outputStringBuilder.setLength( 0 );
     }
   }
 
@@ -183,7 +183,7 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
    *
    * @return
    */
-  protected StringBuffer getOutputStringBuffer() {
-    return outputStringBuffer;
+  protected StringBuilder getOutputStringBuilder() {
+    return outputStringBuilder;
   }
 }

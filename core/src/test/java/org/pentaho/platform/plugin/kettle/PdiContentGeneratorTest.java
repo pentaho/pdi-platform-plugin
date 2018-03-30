@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+* Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
@@ -115,7 +115,7 @@ public class PdiContentGeneratorTest {
     when( repositoryFile.getName() ).thenReturn( path );
     try {
       pdiContentGenerator.execute();
-      String output = pdiContentGenerator.getOutputStringBuffer().toString();
+      String output = pdiContentGenerator.getOutputStringBuilder().toString();
       assertTrue( output.contains( Messages.getInstance().getString( "PdiAction.STATUS_SUCCESS_HEADING" ) ) );
     } catch ( Exception ex ) {
       // There should be no exception throws in this case
