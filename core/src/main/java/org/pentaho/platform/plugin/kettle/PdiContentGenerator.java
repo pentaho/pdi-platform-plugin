@@ -144,7 +144,7 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
             .append( "  <head>" )
             .append( "    <script src='js/themes.js'></script>" )
             .append( "  </head>" )
-            .append( "  <body style='width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column'>" )
+            .append( "  <body style='width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column'; margin: 0; padding: 0>" )
             .append( "    <div style='margin: 0 auto; width: 410px; display: flex; padding: 30px;'>" )
             .append( "      <img src='" ).append( imgPath ).append( "' style='float: left; width: 53px; height: 48px'/>" )
             .append( "      <div>" )
