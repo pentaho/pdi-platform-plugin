@@ -40,6 +40,8 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
   private PdiAction pdiComponent;
   private StringBuilder outputStringBuilder;
 
+  final org.pentaho.platform.plugin.kettle.messages.Messages PDI_PLUGIN_MESSAGES = org.pentaho.platform.plugin.kettle.messages.Messages.getInstance();
+
   public String getMimeType( String streamPropertyName ) {
     return "text/html";
   }
@@ -80,7 +82,6 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
 
     // Verify if the transformation prepareExecution failed or if there is any error in execution, as this exception is logged
     // and not thrown back
-    org.pentaho.platform.plugin.kettle.messages.Messages pdiPluginMessages = org.pentaho.platform.plugin.kettle.messages.Messages.getInstance();
     if ( !pdiComponent.isExecutionSuccessful() ) {
       clearOutputBuffer();
       String errorMessage = Messages.getInstance().getErrorString( "Kettle.ERROR_0011_TRANSFORMATION_PREPARATION_FAILED" );
@@ -88,12 +89,7 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
           MessageTypes.INSTANCE_FAILED, instanceId, errorMessage,
           ( (float) ( System.currentTimeMillis() - start ) / 1000 ), this ); // $NON-NLS-1$
 
-      String heading = pdiComponent.isTransPrepareExecutionFailed()
-              ? pdiPluginMessages.getString( "PdiAction.STATUS_NOT_RUN_HEADING" ) : pdiPluginMessages.getString( "PdiAction.STATUS_ERRORS_HEADING" );
-      String description = pdiComponent.isTransPrepareExecutionFailed()
-              ? pdiPluginMessages.getString( "PdiAction.STATUS_NOT_RUN_DESC" ) : pdiPluginMessages.getString( "PdiAction.STATUS_ERRORS_DESC" );
-
-      outputStringBuilder = formatMessage( "content/pdi-platform-plugin/resources/images/alert.svg", heading, description );
+      outputStringBuilder = pdiComponent.isTransPrepareExecutionFailed() ? writeFailureMessage() : writeFinishedWithErrorsMessage();
       out.write( outputStringBuilder.toString().getBytes() );
 
       return;
@@ -106,9 +102,7 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
      * display the string "Action Successful" when transformation is executed successfully and display a generic error
      * page in case of exception. The detailed logging will continue to go to the log file
      */
-    outputStringBuilder = formatMessage( "content/pdi-platform-plugin/resources/images/success.svg",
-            pdiPluginMessages.getString( "PdiAction.STATUS_SUCCESS_HEADING" ),
-            pdiPluginMessages.getString( "PdiAction.STATUS_SUCCESS_DESC" ) );
+    outputStringBuilder = writeFinishedMessage();
     out.write( outputStringBuilder.toString().getBytes() );
   }
 
@@ -137,7 +131,26 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
     this.repositoryFile = repositoryFile;
   }
 
+  public StringBuilder writeFinishedMessage() {
+    return formatMessage( "content/pdi-platform-plugin/resources/images/success.svg",
+        PDI_PLUGIN_MESSAGES.getString( "PdiAction.STATUS_SUCCESS_HEADING" ),
+        PDI_PLUGIN_MESSAGES.getString( "PdiAction.STATUS_SUCCESS_DESC" ) );
+  }
+
+  public StringBuilder writeFinishedWithErrorsMessage() {
+    return formatMessage( "content/pdi-platform-plugin/resources/images/alert.svg",
+        PDI_PLUGIN_MESSAGES.getString( "PdiAction.STATUS_ERRORS_HEADING" ),
+        PDI_PLUGIN_MESSAGES.getString( "PdiAction.STATUS_ERRORS_DESC" ) );
+  }
+
+  public StringBuilder writeFailureMessage() {
+    return formatMessage( "content/pdi-platform-plugin/resources/images/alert.svg",
+         PDI_PLUGIN_MESSAGES.getString( "PdiAction.STATUS_NOT_RUN_HEADING" ),
+         PDI_PLUGIN_MESSAGES.getString( "PdiAction.STATUS_NOT_RUN_DESC" ) );
+  }
+
   protected StringBuilder formatMessage( String imgPath, String heading, String descriptions ) {
+
     StringBuilder messageBuilder = new StringBuilder();
     messageBuilder.append( "<html>" )
             .append( "  <base href=\"" ).append( PentahoSystem.getApplicationContext().getFullyQualifiedServerURL() ).append( "\">" )
