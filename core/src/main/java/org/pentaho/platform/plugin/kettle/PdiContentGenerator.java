@@ -144,7 +144,7 @@ public class PdiContentGenerator extends FileResourceContentGenerator {
   }
 
   public StringBuilder writeFailureMessage() {
-     return formatMessage( "content/pdi-platform-plugin/resources/images/alert.svg",
+    return formatMessage( "content/pdi-platform-plugin/resources/images/alert.svg",
          PDI_PLUGIN_MESSAGES.getString( "PdiAction.STATUS_NOT_RUN_HEADING" ),
          PDI_PLUGIN_MESSAGES.getString( "PdiAction.STATUS_NOT_RUN_DESC" ) );
   }
