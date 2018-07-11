@@ -635,8 +635,8 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
   }
 
   @VisibleForTesting
-  Job newJob( Repository repository, JobMeta jobMeta ) {
-    return new Job( repository, jobMeta );
+  Job newJob( Repository repository, JobMeta jobMeta, String carteObjectId ) {
+    return new Job( repository, jobMeta, carteObjectId );
   }
 
   /**
@@ -745,11 +745,10 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
       }
 
       try {
-        localJob = newJob( repository, jobMeta );
+        String carteObjectId = UUID.randomUUID().toString();
+        localJob = newJob( repository, jobMeta, carteObjectId );
         localJob.setArguments( arguments );
         localJob.shareVariablesWith( jobMeta );
-        String carteObjectId = UUID.randomUUID().toString();
-        localJob.setContainerObjectId( carteObjectId );
         CarteSingleton.getInstance().getJobMap().addJob( getJobName( carteObjectId ), carteObjectId, localJob,
             new JobConfiguration( localJob.getJobMeta(), jobExConfig ) );
 
