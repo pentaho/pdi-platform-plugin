@@ -484,11 +484,12 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
       }
 
       try {
+        String carteObjectId = UUID.randomUUID().toString();
+        transMeta.setCarteObjectId( carteObjectId );
+
         localTrans = newTrans( transMeta );
         localTrans.setArguments( arguments );
         localTrans.shareVariablesWith( transMeta );
-        String carteObjectId = UUID.randomUUID().toString();
-        localTrans.setContainerObjectId( carteObjectId );
         CarteSingleton.getInstance().getTransformationMap().addTransformation( getTransformationName( carteObjectId ),
             carteObjectId, localTrans, new TransConfiguration( localTrans.getTransMeta(), transExConfig ) );
 
@@ -635,8 +636,8 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
   }
 
   @VisibleForTesting
-  Job newJob( Repository repository, JobMeta jobMeta, String carteObjectId ) {
-    return new Job( repository, jobMeta, carteObjectId );
+  Job newJob( Repository repository, JobMeta jobMeta ) {
+    return new Job( repository, jobMeta );
   }
 
   /**
@@ -746,7 +747,9 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
 
       try {
         String carteObjectId = UUID.randomUUID().toString();
-        localJob = newJob( repository, jobMeta, carteObjectId );
+        jobMeta.setCarteObjectId( carteObjectId );
+
+        localJob = newJob( repository, jobMeta );
         localJob.setArguments( arguments );
         localJob.shareVariablesWith( jobMeta );
         CarteSingleton.getInstance().getJobMap().addJob( getJobName( carteObjectId ), carteObjectId, localJob,
