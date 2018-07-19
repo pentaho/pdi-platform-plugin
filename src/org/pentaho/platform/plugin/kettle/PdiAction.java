@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
+* Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
@@ -476,11 +476,12 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
       }
 
       try {
+        String carteObjectId = UUID.randomUUID().toString();
+        transMeta.setCarteObjectId( carteObjectId );
+
         localTrans = new Trans( transMeta );
         localTrans.setArguments( arguments );
         localTrans.shareVariablesWith( transMeta );
-        String carteObjectId = UUID.randomUUID().toString();
-        localTrans.setContainerObjectId( carteObjectId );
         CarteSingleton.getInstance().getTransformationMap().addTransformation( getTransformationName( carteObjectId ),
             carteObjectId, localTrans, new TransConfiguration( localTrans.getTransMeta(), transExConfig ) );
 
