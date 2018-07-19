@@ -416,7 +416,7 @@ public class PdiActionTest {
     action.setExpandingRemoteJob( TEST_FALSE_BOOLEAN_PARAM );
     action.setStartCopyName( TEST_START_COPY_NAME_PARAM );
 
-    doReturn( job ).when( action ).newJob( repository, meta, null );
+    doReturn( job ).when( action ).newJob( repository, meta );
     doReturn( false ).when( log ).isDebugEnabled();
     doReturn( jobExecutionConfiguration ).when( action ).newJobExecutionConfiguration();
     doReturn( result ).when( job ).getResult();
