@@ -22,3 +22,4 @@ build-res/module-scripts/
 *.iml
 /dev-lib
 target/
+.idea/
