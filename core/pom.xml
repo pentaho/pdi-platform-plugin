@@ -20,7 +20,6 @@
   <properties>
     <pdi.version>8.3.0.0-SNAPSHOT</pdi.version>
     <platform.version>8.3.0.0-SNAPSHOT</platform.version>
-    <slf4j-api.version>1.7.7</slf4j-api.version>
     <slf4j-log4j12.version>1.7.7</slf4j-log4j12.version>
   </properties>
 
@@ -76,20 +75,6 @@
       <artifactId>pentaho-platform-extensions</artifactId>
       <version>${platform.version}</version>
       <scope>provided</scope>
-    </dependency>
-
-    <!-- Third-party dependencies -->
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${slf4j-api.version}</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <version>${slf4j-log4j12.version}</version>
-      <scope>compile</scope>
     </dependency>
 
     <!-- Test dependencies -->
