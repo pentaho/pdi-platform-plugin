@@ -12,12 +12,11 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
+* Copyright (c) 2002-2019 Hitachi Vantara..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
 
-import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.List;
@@ -40,8 +39,6 @@ import org.pentaho.di.core.logging.LogWriter;
 import org.pentaho.di.core.logging.LoggingBuffer;
 import org.pentaho.di.core.parameters.NamedParams;
 import org.pentaho.di.core.parameters.UnknownParamException;
-import org.pentaho.di.core.plugins.PluginRegistry;
-import org.pentaho.di.core.plugins.RepositoryPluginType;
 import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
@@ -52,9 +49,7 @@ import org.pentaho.di.job.JobConfiguration;
 import org.pentaho.di.job.JobExecutionConfiguration;
 import org.pentaho.di.job.JobMeta;
 import org.pentaho.di.job.entry.JobEntryCopy;
-import org.pentaho.di.repository.RepositoriesMeta;
 import org.pentaho.di.repository.Repository;
-import org.pentaho.di.repository.RepositoryMeta;
 import org.pentaho.di.repository.StringObjectId;
 import org.pentaho.di.trans.RowProducer;
 import org.pentaho.di.trans.Trans;
@@ -77,6 +72,7 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.plugin.action.kettle.KettleSystemListener;
 import org.pentaho.platform.plugin.action.messages.Messages;
 import org.pentaho.platform.plugin.kettle.security.policy.rolebased.actions.RepositoryExecuteAction;
+import org.pentaho.di.repository.RepositoryConnectionUtils;
 
 /**
  * An adaptation of KettleComponent to the lightweight PojoComponent/IAction framework
@@ -823,105 +819,13 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
   protected Repository connectToRepository( final LogWriter logWriter ) throws KettleSecurityException, KettleException,
     ActionExecutionException {
 
-    if ( log.isDebugEnabled() ) {
-      log.debug( Messages.getInstance().getString( "Kettle.DEBUG_META_REPOSITORY" ) ); //$NON-NLS-1$
-    }
-
-    RepositoriesMeta repositoriesMeta = new RepositoriesMeta();
-
-    if ( log.isDebugEnabled() ) {
-      log.debug( Messages.getInstance().getString( "Kettle.DEBUG_POPULATING_META" ) ); //$NON-NLS-1$
-    }
-
     boolean singleDiServerInstance =
-        "true".equals( PentahoSystem.getSystemSetting( SINGLE_DI_SERVER_INSTANCE, "true" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      "true".equals( PentahoSystem.getSystemSetting( SINGLE_DI_SERVER_INSTANCE, "true" ) ); //$NON-NLS-1$ //$NON-NLS-2$
 
-    try {
-      if ( singleDiServerInstance ) {
-        if ( log.isDebugEnabled() ) {
-          log.debug( "singleDiServerInstance=true, loading default repository" ); //$NON-NLS-1$
-        }
+    // Calling the kettle utility method to connect to the repository
+    return RepositoryConnectionUtils.connectToRepository( repositoryName, singleDiServerInstance,
+      PentahoSessionHolder.getSession().getName(), PentahoSystem.getApplicationContext().getFullyQualifiedServerURL(), pdiUserAppender );
 
-        // only load a default enterprise repository. If this option is set, then you cannot load
-        // transformations or jobs from anywhere but the local server.
-
-        String repositoriesXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><repositories>" //$NON-NLS-1$
-            + "<repository><id>PentahoEnterpriseRepository</id>" //$NON-NLS-1$
-            + "<name>" + SINGLE_DI_SERVER_INSTANCE + "</name>" //$NON-NLS-1$ //$NON-NLS-2$
-            + "<description>" + SINGLE_DI_SERVER_INSTANCE + "</description>" //$NON-NLS-1$ //$NON-NLS-2$
-            + "<repository_location_url>" + PentahoSystem.getApplicationContext().getFullyQualifiedServerURL()
-            + "</repository_location_url>" //$NON-NLS-1$ //$NON-NLS-2$
-            + "<version_comment_mandatory>N</version_comment_mandatory>" //$NON-NLS-1$
-            + "</repository>" //$NON-NLS-1$
-            + "</repositories>"; //$NON-NLS-1$
-
-        ByteArrayInputStream sbis = new ByteArrayInputStream( repositoriesXml.getBytes( "UTF8" ) );
-        repositoriesMeta.readDataFromInputStream( sbis );
-      } else {
-        // TODO: add support for specified repositories.xml files...
-        repositoriesMeta.readData(); // Read from the default $HOME/.kettle/repositories.xml file.
-      }
-    } catch ( Exception e ) {
-      throw new ActionExecutionException( Messages.getInstance().getErrorString(
-          "Kettle.ERROR_0018_META_REPOSITORY_NOT_POPULATED" ), e ); //$NON-NLS-1$
-    }
-
-    if ( log.isDebugEnabled() ) {
-      log.debug( Messages.getInstance().getString( "Kettle.DEBUG_FINDING_REPOSITORY" ) ); //$NON-NLS-1$
-    }
-    // Find the specified repository.
-    RepositoryMeta repositoryMeta = null;
-    try {
-      if ( singleDiServerInstance ) {
-        repositoryMeta = repositoriesMeta.findRepository( SINGLE_DI_SERVER_INSTANCE );
-      } else {
-        repositoryMeta = repositoriesMeta.findRepository( repositoryName );
-      }
-
-    } catch ( Exception e ) {
-      throw new ActionExecutionException( Messages.getInstance().getErrorString(
-          "Kettle.ERROR_0004_REPOSITORY_NOT_FOUND", repositoryName ), e ); // $NON-NLS-1$
-    }
-
-    if ( repositoryMeta == null ) {
-      if ( log.isDebugEnabled() ) {
-        log.debug( pdiUserAppender.getBuffer().toString() );
-      }
-      throw new ActionExecutionException( Messages.getInstance().getErrorString(
-          "Kettle.ERROR_0004_REPOSITORY_NOT_FOUND", repositoryName ) ); //$NON-NLS-1$
-    }
-
-    if ( log.isDebugEnabled() ) {
-      log.debug( Messages.getInstance().getString( "Kettle.DEBUG_GETTING_REPOSITORY" ) ); //$NON-NLS-1$
-    }
-    Repository repository = null;
-    try {
-      repository =
-          PluginRegistry.getInstance().loadClass( RepositoryPluginType.class, repositoryMeta.getId(),
-              Repository.class );
-      repository.init( repositoryMeta );
-
-    } catch ( Exception e ) {
-      throw new ActionExecutionException( Messages.getInstance().getErrorString(
-          "Kettle.ERROR_0016_COULD_NOT_GET_REPOSITORY_INSTANCE" ), e ); // $NON-NLS-1$
-    }
-
-    // OK, now try the username and password
-    if ( log.isDebugEnabled() ) {
-      log.debug( Messages.getInstance().getString( "Kettle.DEBUG_CONNECTING" ) ); //$NON-NLS-1$
-    }
-
-    // Two scenarios here: internal to server or external to server. If internal, you are already authenticated. If
-    // external, you must provide a username and additionally specify that the IP address of the machine running this
-    // code is trusted.
-    repository.connect( PentahoSessionHolder.getSession().getName(), "password" );
-
-    // OK, the repository is open and ready to use.
-    if ( log.isDebugEnabled() ) {
-      log.debug( Messages.getInstance().getString( "Kettle.DEBUG_FINDING_DIRECTORY" ) ); //$NON-NLS-1$
-    }
-
-    return repository;
   }
 
   public void rowReadEvent( final RowMetaInterface row, final Object[] values ) {
