@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
+* Copyright (c) 2002-2019 Hitachi Vantara..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
@@ -33,7 +33,6 @@ import org.pentaho.commons.connection.memory.MemoryMetaData;
 import org.pentaho.commons.connection.memory.MemoryResultSet;
 import org.pentaho.di.core.Result;
 import org.pentaho.di.core.logging.LogLevel;
-import org.pentaho.di.core.logging.LogWriter;
 import org.pentaho.di.job.Job;
 import org.pentaho.di.job.JobExecutionConfiguration;
 import org.pentaho.di.job.JobMeta;
@@ -371,7 +370,6 @@ public class PdiActionTest {
     PdiAction action = spy( new PdiAction() );
 
     TransMeta meta = mock( TransMeta.class );
-    LogWriter logWriter = mock( LogWriter.class );
     Trans trans = mock( Trans.class );
     Log log = mock( Log.class );
     TransExecutionConfiguration transExecutionConfiguration = mock( TransExecutionConfiguration.class );
@@ -384,11 +382,11 @@ public class PdiActionTest {
     action.setGatheringMetrics( TEST_FALSE_BOOLEAN_PARAM );
 
     doReturn( trans ).when( action ).newTrans( meta );
-    doReturn( true ).when( action ).customizeTrans( trans, logWriter );
+    doReturn( true ).when( action ).customizeTrans( trans );
     doReturn( false ).when( log ).isDebugEnabled();
     doReturn( transExecutionConfiguration ).when( action ).newTransExecutionConfiguration();
 
-    action.executeTransformation( meta, logWriter );
+    action.executeTransformation( meta );
 
     verify( transExecutionConfiguration ).setLogLevel( LogLevel.getLogLevelForCode( TEST_LOG_LEVEL_PARAM ) );
     verify( transExecutionConfiguration ).setClearingLog( Boolean.valueOf( TEST_TRUE_BOOLEAN_PARAM ) );
@@ -402,7 +400,6 @@ public class PdiActionTest {
 
     JobMeta meta = mock( JobMeta.class );
     Repository repository = mock( Repository.class );
-    LogWriter logWriter = mock( LogWriter.class );
     Job job = mock( Job.class );
     Log log = mock( Log.class );
     JobExecutionConfiguration jobExecutionConfiguration = mock( JobExecutionConfiguration.class );
@@ -421,7 +418,7 @@ public class PdiActionTest {
     doReturn( jobExecutionConfiguration ).when( action ).newJobExecutionConfiguration();
     doReturn( result ).when( job ).getResult();
 
-    action.executeJob( meta, repository, logWriter );
+    action.executeJob( meta, repository );
 
     verify( jobExecutionConfiguration ).setLogLevel( LogLevel.getLogLevelForCode( TEST_LOG_LEVEL_PARAM ) );
     verify( jobExecutionConfiguration ).setClearingLog( Boolean.valueOf( TEST_TRUE_BOOLEAN_PARAM ) );
