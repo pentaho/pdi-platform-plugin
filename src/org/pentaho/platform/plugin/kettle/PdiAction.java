@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
+* Copyright (c) 2002-2019 Hitachi Vantara..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
@@ -35,7 +35,6 @@ import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.exception.KettleValueException;
 import org.pentaho.di.core.logging.KettleLogStore;
 import org.pentaho.di.core.logging.LogLevel;
-import org.pentaho.di.core.logging.LogWriter;
 import org.pentaho.di.core.logging.LoggingBuffer;
 import org.pentaho.di.core.parameters.NamedParams;
 import org.pentaho.di.core.parameters.UnknownParamException;
@@ -236,15 +235,12 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     TransMeta transMeta = null;
     JobMeta jobMeta = null;
 
-    LogWriter logWriter = LogWriter.getInstance( "Kettle-pentaho", false ); //$NON-NLS-1$
-
     // initialize environment variables
     KettleSystemListener.environmentInit( PentahoSessionHolder.getSession() );
 
     pdiUserAppender = KettleLogStore.getAppender();
-    Repository repository = connectToRepository( logWriter );
+    Repository repository = connectToRepository();
     LoggingBufferAppender loggingBufferAppender = new LoggingBufferAppender( pdiUserAppender );
-    logWriter.addAppender( loggingBufferAppender );
     try {
       if ( transformation != null ) {
         // try loading from internal repository before falling back onto kettle
@@ -257,13 +253,13 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         }
 
         if ( transMeta == null ) {
-          transMeta = createTransMeta( repository, logWriter );
+          transMeta = createTransMeta( repository );
         }
         if ( transMeta == null ) {
           throw new IllegalStateException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
               .getErrorString( "PdiAction.ERROR_0004_FAILED_TRANSMETA_CREATION" ) ); //$NON-NLS-1$
         }
-        executeTransformation( transMeta, logWriter );
+        executeTransformation( transMeta );
       } else if ( job != null ) {
 
         // try loading from internal repository before falling back onto kettle
@@ -276,16 +272,15 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         }
 
         if ( jobMeta == null ) {
-          jobMeta = createJobMeta( repository, logWriter );
+          jobMeta = createJobMeta( repository );
         }
         if ( jobMeta == null ) {
           throw new IllegalStateException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
               .getErrorString( "PdiAction.ERROR_0005_FAILED_JOBMETA_CREATION" ) ); //$NON-NLS-1$
         }
-        executeJob( jobMeta, repository, logWriter );
+        executeJob( jobMeta, repository );
       }
     } finally {
-      logWriter.removeAppender( loggingBufferAppender );
       if ( repository != null ) {
         if ( log.isDebugEnabled() ) {
           log.debug( Messages.getInstance().getString( "Kettle.DEBUG_DISCONNECTING" ) ); //$NON-NLS-1$
@@ -297,7 +292,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     XMLHandlerCache.getInstance().clear();
   }
 
-  private TransMeta createTransMeta( Repository repository, LogWriter logWriter ) throws ActionExecutionException {
+  private TransMeta createTransMeta( Repository repository ) throws ActionExecutionException {
     // TODO: do we need to set a parameter on the job or trans meta called
     // ${pentaho.solutionpath} to mimic the old in-line xml replacement behavior
     // (see scm history for an illustration of this)?
@@ -348,7 +343,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     return transMeta;
   }
 
-  private JobMeta createJobMeta( Repository repository, LogWriter logWriter ) throws ActionExecutionException {
+  private JobMeta createJobMeta( Repository repository ) throws ActionExecutionException {
     // TODO: do we need to set a parameter on the job or trans meta called
     // ${pentaho.solutionpath} to mimic the old in-line xml replacement behavior
     // (see scm history for an illustration of this)?
@@ -429,7 +424,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     }
   }
 
-  protected boolean customizeTrans( Trans trans, LogWriter logWriter ) {
+  protected boolean customizeTrans( Trans trans ) {
     // override this to customize the transformation before it runs
     // by default there is no transformation
     return true;
@@ -455,11 +450,10 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
    * Executes a PDI transformation
    *
    * @param transMeta
-   * @param logWriter
    * @return
    * @throws ActionExecutionException
    */
-  protected void executeTransformation( final TransMeta transMeta, final LogWriter logWriter )
+  protected void executeTransformation( final TransMeta transMeta )
     throws ActionExecutionException {
     localTrans = null;
 
@@ -498,7 +492,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
 
     if ( localTrans != null ) {
       // OK, we have the transformation, now run it!
-      if ( !customizeTrans( localTrans, logWriter ) ) {
+      if ( !customizeTrans( localTrans ) ) {
         throw new ActionExecutionException( Messages.getInstance().getErrorString(
             "Kettle.ERROR_0028_CUSTOMIZATION_FUNCITON_FAILED" ) ); //$NON-NLS-1$
       }
@@ -691,11 +685,10 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
    *
    * @param jobMeta
    * @param repository
-   * @param logWriter
    * @return
    * @throws ActionExecutionException
    */
-  protected void executeJob( final JobMeta jobMeta, final Repository repository, final LogWriter logWriter )
+  protected void executeJob( final JobMeta jobMeta, final Repository repository )
     throws ActionExecutionException {
     localJob = null;
 
@@ -776,13 +769,12 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
   /**
    * Connects to the PDI repository
    *
-   * @param logWriter
    * @return
    * @throws KettleException
    * @throws KettleSecurityException
    * @throws ActionExecutionException
    */
-  protected Repository connectToRepository( final LogWriter logWriter ) throws KettleSecurityException, KettleException,
+  protected Repository connectToRepository() throws KettleSecurityException, KettleException,
     ActionExecutionException {
 
     if ( log.isDebugEnabled() ) {
