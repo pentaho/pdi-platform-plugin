@@ -18,8 +18,6 @@
 package org.pentaho.platform.plugin.kettle;
 
 import org.pentaho.di.core.exception.KettleException;
-import org.pentaho.di.core.logging.KettleLogStore;
-import org.pentaho.di.core.logging.Slf4jLoggingEventListener;
 import org.pentaho.platform.api.engine.IPluginLifecycleListener;
 import org.pentaho.platform.api.engine.PluginLifecycleException;
 
