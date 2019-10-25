@@ -12,14 +12,12 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
+* Copyright (c) 2002-2019 Hitachi Vantara..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
 
 import org.pentaho.di.core.exception.KettleException;
-import org.pentaho.di.core.logging.KettleLogStore;
-import org.pentaho.di.core.logging.Slf4jLoggingEventListener;
 import org.pentaho.platform.api.engine.IPluginLifecycleListener;
 import org.pentaho.platform.api.engine.PluginLifecycleException;
 
@@ -28,7 +26,6 @@ public class PdiLifecycleListener implements IPluginLifecycleListener {
   public void init() throws PluginLifecycleException {
     try {
       KettleSystemListener.environmentInit( null );
-      KettleLogStore.getAppender().addLoggingEventListener( new Slf4jLoggingEventListener() );
     } catch ( KettleException e ) {
       throw new PluginLifecycleException( e );
     }
