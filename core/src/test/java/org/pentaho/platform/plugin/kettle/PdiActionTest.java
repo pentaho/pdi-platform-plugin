@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2019 Hitachi Vantara..  All rights reserved.
+* Copyright (c) 2002-2021 Hitachi Vantara..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
@@ -412,6 +412,7 @@ public class PdiActionTest {
     action.setRunSafeMode( TEST_FALSE_BOOLEAN_PARAM );
     action.setExpandingRemoteJob( TEST_FALSE_BOOLEAN_PARAM );
     action.setStartCopyName( TEST_START_COPY_NAME_PARAM );
+    action.setGatheringMetrics( TEST_FALSE_BOOLEAN_PARAM );
 
     doReturn( job ).when( action ).newJob( repository, meta );
     doReturn( false ).when( log ).isDebugEnabled();
@@ -420,6 +421,7 @@ public class PdiActionTest {
 
     action.executeJob( meta, repository );
 
+    verify( job ).setGatheringMetrics( Boolean.valueOf( TEST_FALSE_BOOLEAN_PARAM ) );
     verify( jobExecutionConfiguration ).setLogLevel( LogLevel.getLogLevelForCode( TEST_LOG_LEVEL_PARAM ) );
     verify( jobExecutionConfiguration ).setClearingLog( Boolean.valueOf( TEST_TRUE_BOOLEAN_PARAM ) );
     verify( jobExecutionConfiguration ).setSafeModeEnabled( Boolean.valueOf( TEST_FALSE_BOOLEAN_PARAM ) );
