@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2019 Hitachi Vantara..  All rights reserved.
+* Copyright (c) 2002-2021 Hitachi Vantara..  All rights reserved.
 */
 
 package org.pentaho.platform.plugin.kettle;
@@ -480,6 +480,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         localTrans = newTrans( transMeta );
         localTrans.setArguments( arguments );
         localTrans.shareVariablesWith( transMeta );
+        localTrans.setGatheringMetrics( Boolean.valueOf( gatheringMetrics ) );
         CarteSingleton.getInstance().getTransformationMap().addTransformation( getTransformationName( carteObjectId ),
             carteObjectId, localTrans, new TransConfiguration( localTrans.getTransMeta(), transExConfig ) );
 
@@ -741,6 +742,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
         localJob = newJob( repository, jobMeta );
         localJob.setArguments( arguments );
         localJob.shareVariablesWith( jobMeta );
+        localJob.setGatheringMetrics( Boolean.valueOf( gatheringMetrics ) );
         CarteSingleton.getInstance().getJobMap().addJob( getJobName( carteObjectId ), carteObjectId, localJob,
             new JobConfiguration( localJob.getJobMeta(), jobExConfig ) );
 
