@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2020 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2021 Hitachi Vantara..  All rights reserved.
  */
 
 
@@ -26,7 +26,7 @@ import org.pentaho.platform.api.data.IPooledDatasourceService;
 import org.pentaho.platform.plugin.action.kettle.PlatformKettleDataSourceProvider;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import javax.sql.DataSource;
 import java.util.UUID;
 
@@ -36,6 +36,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 
 
 @RunWith( PowerMockRunner.class )
+@PowerMockIgnore( "jdk.internal.reflect.*" )
 @PrepareForTest( org.pentaho.platform.plugin.action.kettle.PlatformKettleDataSourceProvider.class )
 public class PlatformKettleDataSourceProviderTest {
 
