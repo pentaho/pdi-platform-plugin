@@ -45,12 +45,6 @@
       <version>${pdi.version}</version>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>org.pentaho.di.plugins</groupId>
-      <artifactId>kettle-log4j-core</artifactId>
-      <version>${pdi.version}</version>
-      <scope>provided</scope>
-    </dependency>
     <!-- Pentaho dependencies -->
     <dependency>
       <groupId>pentaho</groupId>
