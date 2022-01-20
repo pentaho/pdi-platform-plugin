@@ -18,14 +18,15 @@
 package org.pentaho.platform.plugin.kettle;
 
 import org.apache.commons.lang.NotImplementedException;
-import org.apache.log4j.Appender;
-import org.apache.log4j.Layout;
-import org.apache.log4j.spi.ErrorHandler;
-import org.apache.log4j.spi.Filter;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Layout;
+import org.apache.logging.log4j.core.ErrorHandler;
+import org.apache.logging.log4j.core.LogEvent;
 import org.pentaho.di.core.logging.DefaultLogLevel;
 import org.pentaho.di.core.logging.KettleLoggingEvent;
 import org.pentaho.di.core.logging.LoggingBuffer;
+
+import java.io.Serializable;
 
 
 public class LoggingBufferAppender implements Appender {
@@ -35,40 +36,11 @@ public class LoggingBufferAppender implements Appender {
     this.loggingBuffer = loggingBuffer;
   }
 
-  @Override
-  public void addFilter( Filter arg0 ) {
-    throw new NotImplementedException();
-  }
 
   @Override
-  public void clearFilters() {
-    throw new NotImplementedException();
-  }
-
-  @Override
-  public void close() {
-    throw new NotImplementedException();
-  }
-
-  @Override
-  public void doAppend( LoggingEvent event ) {
+  public void append(LogEvent event) {
     KettleLoggingEvent kle = new KettleLoggingEvent( event.getMessage(), System.currentTimeMillis(), DefaultLogLevel.getLogLevel() );
     loggingBuffer.doAppend( kle );
-  }
-
-  @Override
-  public ErrorHandler getErrorHandler() {
-    throw new NotImplementedException();
-  }
-
-  @Override
-  public Filter getFilter() {
-    throw new NotImplementedException();
-  }
-
-  @Override
-  public Layout getLayout() {
-    throw new NotImplementedException();
   }
 
   @Override
@@ -77,22 +49,52 @@ public class LoggingBufferAppender implements Appender {
   }
 
   @Override
-  public boolean requiresLayout() {
+  public Layout<? extends Serializable> getLayout() {
+    throw new NotImplementedException();
+  }
+
+  @Override
+  public boolean ignoreExceptions() {
     return false;
   }
 
   @Override
-  public void setErrorHandler( ErrorHandler errorHandler ) {
+  public ErrorHandler getHandler() {
     throw new NotImplementedException();
   }
 
   @Override
-  public void setLayout( Layout layout ) {
+  public void setHandler(ErrorHandler handler) {
     throw new NotImplementedException();
   }
 
   @Override
-  public void setName( String name ) {
-    loggingBuffer.setName( name );
+  public State getState() {
+    return null;
+  }
+
+  @Override
+  public void initialize() {
+
+  }
+
+  @Override
+  public void start() {
+
+  }
+
+  @Override
+  public void stop() {
+
+  }
+
+  @Override
+  public boolean isStarted() {
+    return false;
+  }
+
+  @Override
+  public boolean isStopped() {
+    return false;
   }
 }
