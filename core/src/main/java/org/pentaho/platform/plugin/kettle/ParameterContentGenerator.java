@@ -1,3 +1,20 @@
+/*!
+ * This program is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
+ * Foundation.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with this
+ * program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+ * or from the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ *
+ * Copyright (c) 2002-2023 Hitachi Vantara..  All rights reserved.
+ */
+
 package org.pentaho.platform.plugin.kettle;
 
 import org.apache.commons.lang.StringUtils;
@@ -92,8 +109,18 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
       while( it.hasNext() ){
 
         String name = it.next();
-        String value = requestParams.hasParameter( name ) ? requestParams.getParameter( name ).toString() : "";
-
+        String value = "";
+        if ( requestParams.hasParameter( name ) ) {
+          Object paramVal = requestParams.getParameter( name );
+          if ( paramVal instanceof String[] ) {
+            // jobs scheduled through PUC appear to have all of their parameters duplicated in the data stored, which leads
+            // to these request params being a list of strings instead of a single string.
+            String[] paramArray = (String[])paramVal;
+            value = paramArray.length > 0 ? paramArray[ 0 ] : "";
+          } else {
+            value = requestParams.getParameter( name ).toString();
+          }
+        }
         paramMap.put( name, value );
       }
     }
