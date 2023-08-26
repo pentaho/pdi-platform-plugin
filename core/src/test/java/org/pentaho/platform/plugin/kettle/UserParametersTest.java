@@ -43,6 +43,7 @@ import org.springframework.util.Assert;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class UserParametersTest {
 
@@ -111,9 +112,9 @@ public class UserParametersTest {
 
     // we now call IPdiContentProvider.getUserParameters( kjb ), that should filter out protected parameters
     IPdiContentProvider pdiContentProvider = new PdiContentProvider( PentahoSystem.get( IUnifiedRepository.class ) );
-    String[] userParams = pdiContentProvider.getUserParameters( SOLUTION_REPOSITORY + SAMPLE_TRANS + ".ktr" );
+    Map<String, String> userParams = pdiContentProvider.getUserParameters( SOLUTION_REPOSITORY + SAMPLE_TRANS + ".ktr" );
 
-    for ( String userParam : userParams ) {
+    for ( String userParam : userParams.keySet() ) {
       protectedParameterNameExistsInKtr |= userParam != null && userParam.equals( SAMPLE_PROTECTED_PARAMETER_NAME );
     }
 
@@ -150,9 +151,9 @@ public class UserParametersTest {
 
     // we now call IPdiContentProvider.getUserParameters( kjb ), that should filter out protected parameters
     IPdiContentProvider pdiContentProvider = new PdiContentProvider( PentahoSystem.get( IUnifiedRepository.class ) );
-    String[] userParams = pdiContentProvider.getUserParameters( SOLUTION_REPOSITORY + SAMPLE_JOB + ".kjb" );
+    Map<String, String> userParams = pdiContentProvider.getUserParameters( SOLUTION_REPOSITORY + SAMPLE_JOB + ".kjb" );
 
-    for ( String userParam : userParams ) {
+    for ( String userParam : userParams.keySet() ) {
       protectedParameterNameExistsInKjb |= userParam != null && userParam.equals( SAMPLE_PROTECTED_PARAMETER_NAME );
     }
 

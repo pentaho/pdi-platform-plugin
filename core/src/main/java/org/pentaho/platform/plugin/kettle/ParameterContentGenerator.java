@@ -71,9 +71,10 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
         (IPdiContentProvider) PentahoSystem.get( IPluginManager.class ).getBean(
             IPdiContentProvider.class.getSimpleName() );
 
-    String[] userParams = provider.getUserParameters( file.getPath() );
+    Map<String, String> userParams = provider.getUserParameters( file.getPath() );
+    Map<String, String> userVariables = provider.getVariables( file.getPath() );
 
-    ParametersBean paramBean = new ParametersBean( userParams , requestParameterToStringMap( requestParams ) );
+    ParametersBean paramBean = new ParametersBean( userParams, userVariables, requestParameterToStringMap( requestParams ) );
     String response = paramBean.getParametersXmlString();
 
     out.write( response.getBytes( LocaleHelper.getSystemEncoding() ) );
@@ -100,7 +101,7 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
 
   private Map<String, String> requestParameterToStringMap( IParameterProvider requestParams ){
 
-    Map<String, String> paramMap = new HashMap<String, String>();
+    Map<String, String> paramMap = new HashMap<>();
 
     if( requestParams != null ){
 

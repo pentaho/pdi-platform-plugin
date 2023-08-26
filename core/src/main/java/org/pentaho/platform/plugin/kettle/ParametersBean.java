@@ -27,16 +27,18 @@ public class ParametersBean {
   private static final String PARAMETER_CORE_NAMESPACE =
       "http://reporting.pentaho.org/namespaces/engine/parameter-attributes/core";
 
-  private String[] userParams;
+  private Map<String, String> userParams;
+  private Map<String, String> variables;
   private Document document;
   private Map<String, String> requestParams = new HashMap<String, String>();
 
-  public ParametersBean( String[] userParams ) {
+  public ParametersBean( Map<String, String> userParams ) {
     this.userParams = userParams;
   }
 
-  public ParametersBean( String[] userParams , Map<String, String> requestParams ) {
+  public ParametersBean( Map<String, String> userParams, Map<String, String> variables, Map<String, String> requestParams ) {
     this.userParams = userParams;
+    this.variables = variables;
     this.requestParams = requestParams != null ? requestParams : new HashMap<String, String>();
   }
 
@@ -48,6 +50,7 @@ public class ParametersBean {
 
     // access the ktr/kjb file and identify if there are any user input parameters
     parameters = createUserParameters( parameters , requestParams );
+    parameters = createUserVariables( parameters, requestParams );
     parameters = createSystemRequiredParameters( parameters );
 
     document.appendChild( parameters );
@@ -102,15 +105,49 @@ public class ParametersBean {
 
       if ( userParams != null ) {
 
-        for ( String param : userParams ) {
+        for ( Map.Entry<String, String> e : userParams.entrySet() ) {
 
-          Element element = createBaseElement( "parameter", param, null, false );
+          Element element = createBaseElement( "parameter", e.getKey(), null, false );
           element.appendChild( createAttribute( "role", "user" ) ); //$NON-NLS-1$ //$NON-NLS-2$
-          element.appendChild( createAttribute( "label", param ) ); //$NON-NLS-1$ //$NON-NLS-2$
+          element.appendChild( createAttribute( "label", e.getKey() ) ); //$NON-NLS-1$ //$NON-NLS-2$
 
-          if ( paramMap.containsKey( param ) ) {
-            String value = paramMap.get( param );
+          if ( paramMap.containsKey( e.getKey() ) ) {
+            String value = paramMap.get( e.getKey() );
             element.appendChild( createValue( value, "java.lang.String", value ) );
+          } else {
+            element.appendChild( createValue( e.getValue(), "java.lang.String", e.getValue() ) );
+          }
+
+          parameters.appendChild( element );
+        }
+      }
+
+    } catch ( Exception e ) {
+      log.error( "", e );
+    }
+
+    return parameters;
+  }
+
+  private Element createUserVariables( Element parameters, Map<String, String> paramMap ) {
+
+    try {
+
+      if ( variables != null ) {
+
+        for ( Map.Entry<String, String> e : variables.entrySet() ) {
+
+          Element element = createBaseElement( "parameter", e.getKey(), null, false );
+          element.appendChild( createAttribute( "role", "user" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+          element.appendChild( createAttribute( "label", e.getKey() ) ); //$NON-NLS-1$ //$NON-NLS-2$
+          element.appendChild( createAttribute( "parameter-group", "variables" ) );
+          element.appendChild( createAttribute( "parameter-group-label", "Variables" ) );
+
+          if ( paramMap.containsKey( e.getKey() ) ) {
+            String value = paramMap.get( e.getKey() );
+            element.appendChild( createValue( value, "java.lang.String", value ) );
+          } else {
+            element.appendChild( createValue( e.getValue(), "java.lang.String", e.getValue() ) );
           }
 
           parameters.appendChild( element );
