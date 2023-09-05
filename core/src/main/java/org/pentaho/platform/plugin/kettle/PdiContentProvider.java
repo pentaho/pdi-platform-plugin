@@ -1,7 +1,9 @@
 package org.pentaho.platform.plugin.kettle;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
@@ -35,32 +37,28 @@ public class PdiContentProvider implements IPdiContentProvider {
   @Override
   public boolean hasUserParameters( String kettleFilePath ) {
 
-    String[] userParams = getUserParameters( kettleFilePath );
-    return userParams != null && userParams.length > 0;
+    Map<String, String> userParams = getUserParameters( kettleFilePath );
+    return userParams != null && !userParams.isEmpty();
   }
 
   @Override
-  public String[] getUserParameters( String kettleFilePath ) {
+  public Map<String, String> getUserParameters(String kettleFilePath ) {
 
-    List<String> userParams = new ArrayList<String>();
+    Map<String, String> userParams = new HashMap<>();
 
     if ( !StringUtils.isEmpty( kettleFilePath ) ) {
-
       try {
-
         NamedParams np = getMeta( kettleFilePath );
-
         if ( !isEmpty( np = filterUserParameters( np ) ) ) {
-
-          return np.listParameters();
+          for( String s : np.listParameters() ) {
+            userParams.put(s, np.getParameterValue( s ) );
+          }
         }
-
       } catch ( KettleException e ) {
         log.error( e );
       }
     }
-
-    return userParams.toArray( new String[] {} );
+    return userParams;
   }
 
   private NamedParams filterUserParameters( NamedParams params ) {
@@ -103,6 +101,11 @@ public class PdiContentProvider implements IPdiContentProvider {
     }
 
     return meta;
+  }
+
+  @Override
+  public Map<String, String> getVariables( String kettleFilePath ) {
+    return new HashMap<>();
   }
 
   private boolean isUserParameter( String paramName ) {
