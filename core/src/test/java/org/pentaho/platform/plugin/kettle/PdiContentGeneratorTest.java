@@ -40,7 +40,7 @@ import org.pentaho.platform.api.engine.ISolutionEngine;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.repository2.unified.fs.FileSystemBackedUnifiedRepository;
 import org.pentaho.platform.engine.services.solution.SolutionEngine;
-import org.pentaho.platform.scheduler2.quartz.QuartzScheduler;
+//import org.pentaho.platform.scheduler2.quartz.QuartzScheduler;
 import org.pentaho.platform.api.scheduler2.IScheduler;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
@@ -55,7 +55,7 @@ public class PdiContentGeneratorTest {
   private PdiContentGenerator pdiContentGenerator;
   private OutputStream outputStream;
   private RepositoryFile repositoryFile;
-  private QuartzScheduler scheduler;
+  //private QuartzScheduler scheduler;
   private PdiAction pdiAction;
 
   @Before
@@ -80,13 +80,13 @@ public class PdiContentGeneratorTest {
     pdiContentGenerator.setOutputStream( outputStream );
     pdiContentGenerator.setRepositoryFile( repositoryFile );
 
-    scheduler = new QuartzScheduler();
-    scheduler.start();
+    //scheduler = new QuartzScheduler();
+    //scheduler.start();
 
     mp.define( IUserRoleListService.class, StubUserRoleListService.class );
     mp.define( UserDetailsService.class, StubUserDetailService.class );
     mp.defineInstance( IAuthorizationPolicy.class, new TestAuthorizationPolicy() );
-    mp.defineInstance( IScheduler.class, scheduler );
+    //mp.defineInstance( IScheduler.class, scheduler );
 
     mp.define( ISolutionEngine.class, SolutionEngine.class );
     FileSystemBackedUnifiedRepository repo =  new FileSystemBackedUnifiedRepository( SOLUTION_REPOSITORY );

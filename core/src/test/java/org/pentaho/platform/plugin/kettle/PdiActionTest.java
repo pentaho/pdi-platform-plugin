@@ -57,7 +57,8 @@ import org.pentaho.platform.engine.security.SecurityHelper;
 import org.pentaho.platform.engine.services.solution.SolutionEngine;
 import org.pentaho.platform.plugin.kettle.security.policy.rolebased.actions.RepositoryExecuteAction;
 import org.pentaho.platform.repository2.unified.fs.FileSystemBackedUnifiedRepository;
-import org.pentaho.platform.scheduler2.quartz.QuartzScheduler;
+//@TODO Enable the correct interface and resume the tests
+//import org.pentaho.platform.scheduler2.quartz.QuartzScheduler;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import java.io.File;
@@ -78,7 +79,7 @@ public class PdiActionTest {
   private static final String TEST_FALSE_BOOLEAN_PARAM = "false";
   private static final String TEST_START_COPY_NAME_PARAM = "startCopyName";
 
-  private QuartzScheduler scheduler;
+  //private QuartzScheduler scheduler;
 
   public static final String SESSION_PRINCIPAL = "SECURITY_PRINCIPAL";
 
@@ -98,14 +99,14 @@ public class PdiActionTest {
     IPentahoSession session = new StandaloneSession();
     PentahoSessionHolder.setSession( session );
 
-    scheduler = new QuartzScheduler();
-    scheduler.start();
+    //scheduler = new QuartzScheduler();
+    //scheduler.start();
 
     mp.define( IUserRoleListService.class, StubUserRoleListService.class );
     mp.define( UserDetailsService.class, StubUserDetailService.class );
     mp.defineInstance( IAuthorizationPolicy.class, new TestAuthorizationPolicy() );
     mp.setSettingsProvider( new PathBasedSystemSettings() );
-    mp.defineInstance( IScheduler.class, scheduler );
+    //mp.defineInstance( IScheduler.class, scheduler );
 
     mp.define( ISolutionEngine.class, SolutionEngine.class );
     FileSystemBackedUnifiedRepository repo =  new FileSystemBackedUnifiedRepository( SOLUTION_REPOSITORY );
