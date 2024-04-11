@@ -26,9 +26,9 @@
     <!-- Third-party dependencies -->
     <commons.version>4.1</commons.version>
     <!-- Test dependencies -->
-    <junit.version>4.12</junit.version>
+    <junit.version>4.13.2</junit.version>
     <hsqldb.version>2.3.2</hsqldb.version>
-    <mockito.version>3.12.4</mockito.version>
+    <mockito.version>5.10.0</mockito.version>
   </properties>
 
 
