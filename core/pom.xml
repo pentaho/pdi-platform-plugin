@@ -7,19 +7,19 @@
   <parent>
     <groupId>pentaho</groupId>
     <artifactId>pentaho-pdi-platform-plugin</artifactId>
-    <version>10.2.0.0-SNAPSHOT</version>
+    <version>10.2.0.0-179</version>
   </parent>
 
   <groupId>pentaho</groupId>
   <artifactId>DIS</artifactId>
-  <version>10.2.0.0-SNAPSHOT</version>
+  <version>10.2.0.0-179</version>
   <packaging>jar</packaging>
 
   <name>Kettle Platform Plugin</name>
 
   <properties>
-    <pdi.version>10.2.0.0-SNAPSHOT</pdi.version>
-    <platform.version>10.2.0.0-SNAPSHOT</platform.version>
+    <pdi.version>10.2.0.0-179</pdi.version>
+    <platform.version>10.2.0.0-179</platform.version>
     <slf4j-log4j12.version>1.7.7</slf4j-log4j12.version>
   </properties>
 
