@@ -20,6 +20,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.pentaho.di.core.Const;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.parameters.DuplicateParamException;
 import org.pentaho.di.core.parameters.NamedParams;
@@ -133,5 +134,10 @@ public class PdiContentProvider implements IPdiContentProvider {
   private boolean isEmpty( NamedParams np ) {
     return np == null || np.listParameters() == null || np.listParameters().length == 0;
 
+  }
+
+  @Override
+  public String getHideInternalVariable(){
+    return System.getProperty( Const.HIDE_INTERNAL_VARIABLES, Const.HIDE_INTERNAL_VARIABLES_DEFAULT );
   }
 }
