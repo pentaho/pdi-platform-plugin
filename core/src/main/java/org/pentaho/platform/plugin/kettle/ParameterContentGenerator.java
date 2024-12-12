@@ -30,6 +30,7 @@ import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * ParameterContentGenerator returns the available parameters for a given ktr/kjb in XML format
@@ -70,7 +71,14 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
     Map<String, String> userParams = provider.getUserParameters( file.getPath() );
     Map<String, String> userVariables = provider.getVariables( file.getPath() );
 
-    ParametersBean paramBean = new ParametersBean( userParams, userVariables, requestParameterToStringMap( requestParams ) );
+    // Ultimately, user variables come from inspecting strings in the transmeta and matching on "${" and "}"
+    // this means that if we have a param defined and have a reference it somewhere in the ktr, it will show up
+    // as both a param and a variable -- we only want the param to show up in that case.
+    Map<String, String> filteredUserVariables = userVariables.entrySet().stream()
+      .filter( i -> !userParams.containsKey( i.getKey() ) )
+      .collect( Collectors.toMap( Map.Entry::getKey, Map.Entry::getValue ));
+
+    ParametersBean paramBean = new ParametersBean( userParams, filteredUserVariables, requestParameterToStringMap( requestParams ) );
     String response = paramBean.getParametersXmlString();
 
     out.write( response.getBytes( LocaleHelper.getSystemEncoding() ) );
