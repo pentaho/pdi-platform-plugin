@@ -18,12 +18,6 @@ import org.apache.commons.logging.Log;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 import org.pentaho.commons.connection.IPentahoResultSet;
 import org.pentaho.commons.connection.memory.MemoryMetaData;
 import org.pentaho.commons.connection.memory.MemoryResultSet;
@@ -56,16 +50,24 @@ import org.pentaho.platform.repository2.unified.fs.FileSystemBackedUnifiedReposi
 import org.pentaho.platform.scheduler2.quartz.QuartzScheduler;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 import org.springframework.security.core.userdetails.UserDetailsService;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.mock;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 public class PdiActionTest {
 
@@ -86,10 +88,10 @@ public class PdiActionTest {
 
   @Before
   public void init() throws SchedulerException, PlatformInitializationException {
-    System.setProperty( "java.naming.factory.initial", "org.osjava.sj.SimpleContextFactory" ); //$NON-NLS-1$ //$NON-NLS-2$
-    System.setProperty( "org.osjava.sj.root", SOLUTION_REPOSITORY ); //$NON-NLS-1$ //$NON-NLS-2$
-    System.setProperty( "org.osjava.sj.delimiter", "/" ); //$NON-NLS-1$ //$NON-NLS-2$
-    System.setProperty( "PENTAHO_SYS_CFG_PATH", new File( SOLUTION_REPOSITORY + "/pentaho.xml" ).getAbsolutePath() ); //$NON-NLS-2$
+    System.setProperty( "java.naming.factory.initial", "org.osjava.sj.SimpleContextFactory" );
+    System.setProperty( "org.osjava.sj.root", SOLUTION_REPOSITORY );
+    System.setProperty( "org.osjava.sj.delimiter", "/" );
+    System.setProperty( "PENTAHO_SYS_CFG_PATH", new File( SOLUTION_REPOSITORY + "/pentaho.xml" ).getAbsolutePath() );
 
     IPentahoSession session = new StandaloneSession();
     PentahoSessionHolder.setSession( session );
@@ -119,23 +121,23 @@ public class PdiActionTest {
   }
 
   @Test( expected = Exception.class )
-  public void testValidatation() throws Exception {
-    PdiAction action = new PdiAction();
+  public void testValidation() throws Exception {
+    PdiAction action = getSpyPdiAction();
     action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     action.execute();
   }
 
   @Test
   public void testTransformationVariableOverrides() throws Exception {
-    Map<String, String> variables = new HashMap<String, String>();
+    Map<String, String> variables = new HashMap<>();
     variables.put( "customVariable", "customVariableValue" );
 
     String[] args = new String[] { "dummyArg" };
 
-    Map<String, String> overrideParams = new HashMap<String, String>();
+    Map<String, String> overrideParams = new HashMap<>();
     overrideParams.put( "param2", "12" );
 
-    PdiAction action = new PdiAction();
+    PdiAction action = getSpyPdiAction();
     action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     action.setArguments( args );
     action.setVariables( variables );
@@ -162,7 +164,7 @@ public class PdiActionTest {
 
   @Test
   public void testLoadingFromVariousPaths() throws Exception {
-    PdiAction action = new PdiAction();
+    PdiAction action = getSpyPdiAction();
     action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     action.setArguments( new String[] { "dummyArg" } );
     action.setDirectory( SOLUTION_REPOSITORY  );
@@ -172,7 +174,7 @@ public class PdiActionTest {
 
   @Test( expected = ActionExecutionException.class )
   public void testBadFileThrowsException() throws Exception {
-    PdiAction action = new PdiAction();
+    PdiAction action = getSpyPdiAction();
     action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     action.setArguments( new String[] { "dummyArg" } );
     action.setDirectory( "/" );
@@ -182,7 +184,7 @@ public class PdiActionTest {
 
   @Test
   public void testJobPaths() throws Exception {
-    PdiAction component = new PdiAction();
+    PdiAction component = getSpyPdiAction();
     component.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     component.setDirectory( SOLUTION_REPOSITORY );
     component.setJob( "/org/pentaho/platform/plugin/kettle/PdiActionTest_testJobPaths.kjb" );
@@ -201,7 +203,7 @@ public class PdiActionTest {
     rowsIn.addRow( new Object[] { "Central", "Sales", "test title" } );
     rowsIn.addRow( new Object[] { "Central", "xyz", "bad" } );
 
-    PdiAction component = new PdiAction();
+    PdiAction component = getSpyPdiAction();
     component.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     component.setDirectory( SOLUTION_REPOSITORY );
     component.setTransformation( "/org/pentaho/platform/plugin/kettle/PdiActionTest_testTransformationInjector.ktr" );
@@ -239,7 +241,7 @@ public class PdiActionTest {
 
   @Test
   public void testNoSettings() {
-    PdiAction component = new PdiAction();
+    PdiAction component = getSpyPdiAction();
     component.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     try {
       component.validate();
@@ -251,7 +253,7 @@ public class PdiActionTest {
 
   @Test
   public void testBadSolutionTransformation() {
-    PdiAction component = new PdiAction();
+    PdiAction component = getSpyPdiAction();
     component.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     component.setTransformation( "testBadSolutionTransformation.ktr" );
     try {
@@ -264,7 +266,7 @@ public class PdiActionTest {
 
   @Test
   public void testBadSolutionJob() {
-    PdiAction component = new PdiAction();
+    PdiAction component = getSpyPdiAction();
     component.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     component.setJob( "testBadSolutionJob.kjb" );
     try {
@@ -279,13 +281,13 @@ public class PdiActionTest {
   public void testJobParameterPassing() throws Exception {
     String[] args = new String[] { "dummyArg" };
 
-    Map<String, String> params = new HashMap<String, String>();
+    Map<String, String> params = new HashMap<>();
     params.put( "firstName", "John" );
     params.put( "lastName", "Doe" );
 
     // this job will pass these parameters to its underlying transformation
     // the transformation will simply add 'firstName' and 'lastName' into a 'fullName'
-    PdiAction component = new PdiAction();
+    PdiAction component = getSpyPdiAction();
     component.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     component.setDirectory( SOLUTION_REPOSITORY );
     component.setJob( "/org/pentaho/platform/plugin/kettle/PdiActionTest_testJobParameterPassing.kjb" );
@@ -308,7 +310,7 @@ public class PdiActionTest {
       logScraping = logScraping.substring( 0, logScraping.indexOf( "\n" ) );
       String fullName = logScraping.replace( "fullName =", "" ).trim();
 
-      assertEquals( fullName.trim(), "JohnDoe" );
+      assertEquals( "JohnDoe", fullName.trim() );
     }
 
     // 3) if no exception then the test passes
@@ -317,7 +319,7 @@ public class PdiActionTest {
   @Test
   public void testTransformationInitializationFail() throws Exception {
     try {
-      PdiAction action = new PdiAction();
+      PdiAction action = getSpyPdiAction();
       action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
       action.setDirectory( SOLUTION_REPOSITORY );
       action.setTransformation( "/org/pentaho/platform/plugin/kettle/PdiActionTest_testTransformationInitializationFail.ktr" );
@@ -332,7 +334,7 @@ public class PdiActionTest {
   @Test
   public void testTransformationPrepareExecutionFailed() {
     try {
-      PdiAction action = new PdiAction();
+      PdiAction action = getSpyPdiAction();
       action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
       action.setDirectory( SOLUTION_REPOSITORY );
       action.setTransformation( "/org/pentaho/platform/plugin/kettle/PdiActionTest_testTransformationPrepareExecutionFailed.ktr" );
@@ -348,7 +350,7 @@ public class PdiActionTest {
   @Test
   public void testExecutionSuccessful() {
     try {
-      PdiAction action = new PdiAction();
+      PdiAction action = getSpyPdiAction();
       action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
       action.setDirectory( SOLUTION_REPOSITORY );
       action.setTransformation( "/org/pentaho/platform/plugin/kettle/PdiActionTest_testTransformationExecutionFailure.ktr" );
@@ -363,71 +365,118 @@ public class PdiActionTest {
 
   @Test
   public void testSetParamsIntoExecuteConfigInExecuteTrans() throws ActionExecutionException {
-    PdiAction action = spy( new PdiAction() );
-
-    TransMeta meta = mock( TransMeta.class );
+    PdiAction action = getSpyPdiAction();
+    TransMeta meta = spy( new TransMeta() );
     Trans trans = mock( Trans.class );
-    Log log = mock( Log.class );
     TransExecutionConfiguration transExecutionConfiguration = mock( TransExecutionConfiguration.class );
 
-    action.setLogger( log );
-
-    action.setLogLevel( TEST_LOG_LEVEL_PARAM );
-    action.setClearLog( TEST_TRUE_BOOLEAN_PARAM );
-    action.setRunSafeMode( TEST_FALSE_BOOLEAN_PARAM );
-    action.setGatheringMetrics( TEST_FALSE_BOOLEAN_PARAM );
-
     doReturn( trans ).when( action ).newTrans( meta );
-    doReturn( true ).when( action ).customizeTrans( trans );
-    doReturn( false ).when( log ).isDebugEnabled();
     doReturn( transExecutionConfiguration ).when( action ).newTransExecutionConfiguration();
 
+    // Let's avoid logging here
+    Log log = mock( Log.class );
+    action.setLogger( log );
+    doReturn( false ).when( log ).isDebugEnabled();
+
+    // SET INITIAL VALUES FOR THE TEST
+    //
+
+    // Log level
+    action.setLogLevel( TEST_LOG_LEVEL_PARAM );
+    meta.setLogLevel( LogLevel.getLogLevelForCode( TEST_LOG_LEVEL_PARAM ) );
+
+    // Clear log
+    action.setClearLog( TEST_TRUE_BOOLEAN_PARAM );
+
+    // Safe mode
+    action.setRunSafeMode( TEST_FALSE_BOOLEAN_PARAM );
+    meta.setSafeModeEnabled( Boolean.parseBoolean( TEST_FALSE_BOOLEAN_PARAM ) );
+
+    // Gather metrics
+    action.setGatheringMetrics( TEST_FALSE_BOOLEAN_PARAM );
+    meta.setGatheringMetrics( Boolean.parseBoolean( TEST_FALSE_BOOLEAN_PARAM ) );
+
+    // EXECUTE
+    //
     action.executeTransformation( meta );
 
+    // VALIDATIONS
+    //
+
+    // TransExecutionConfiguration
     verify( transExecutionConfiguration ).setLogLevel( LogLevel.getLogLevelForCode( TEST_LOG_LEVEL_PARAM ) );
-    verify( transExecutionConfiguration ).setClearingLog( Boolean.valueOf( TEST_TRUE_BOOLEAN_PARAM ) );
-    verify( transExecutionConfiguration ).setSafeModeEnabled( Boolean.valueOf( TEST_FALSE_BOOLEAN_PARAM ) );
-    verify( transExecutionConfiguration ).setGatheringMetrics( Boolean.valueOf( TEST_FALSE_BOOLEAN_PARAM ) );
+    verify( transExecutionConfiguration ).setClearingLog( Boolean.parseBoolean( TEST_TRUE_BOOLEAN_PARAM ) );
+    verify( transExecutionConfiguration ).setSafeModeEnabled( Boolean.parseBoolean( TEST_FALSE_BOOLEAN_PARAM ) );
+    verify( transExecutionConfiguration ).setGatheringMetrics( Boolean.parseBoolean( TEST_FALSE_BOOLEAN_PARAM ) );
   }
 
   @Test
   public void testSetParamsIntoExecuteConfigInExecuteJob() throws ActionExecutionException {
-    PdiAction action = spy( new PdiAction() );
-
-    JobMeta meta = mock( JobMeta.class );
+    PdiAction action = getSpyPdiAction();
+    JobMeta meta = spy( new JobMeta() );
     Repository repository = mock( Repository.class );
     Job job = mock( Job.class );
-    Log log = mock( Log.class );
     JobExecutionConfiguration jobExecutionConfiguration = mock( JobExecutionConfiguration.class );
     Result result = mock( Result.class );
 
-    action.setLogger( log );
-
-    action.setLogLevel( TEST_LOG_LEVEL_PARAM );
-    action.setClearLog( TEST_TRUE_BOOLEAN_PARAM );
-    action.setRunSafeMode( TEST_FALSE_BOOLEAN_PARAM );
-    action.setExpandingRemoteJob( TEST_FALSE_BOOLEAN_PARAM );
-    action.setStartCopyName( TEST_START_COPY_NAME_PARAM );
-    action.setGatheringMetrics( TEST_FALSE_BOOLEAN_PARAM );
-
     doReturn( job ).when( action ).newJob( repository, meta );
-    doReturn( false ).when( log ).isDebugEnabled();
     doReturn( jobExecutionConfiguration ).when( action ).newJobExecutionConfiguration();
     doReturn( result ).when( job ).getResult();
 
+    // Let's avoid logging here
+    Log log = mock( Log.class );
+    doReturn( false ).when( log ).isDebugEnabled();
+    action.setLogger( log );
+
+    // SET INITIAL VALUES FOR THE TEST
+    //
+
+    // Log level
+    action.setLogLevel( TEST_LOG_LEVEL_PARAM );
+    meta.setLogLevel( LogLevel.getLogLevelForCode( TEST_LOG_LEVEL_PARAM ) );
+
+    // Clear log
+    action.setClearLog( TEST_TRUE_BOOLEAN_PARAM );
+
+    // Safe mode
+    action.setRunSafeMode( TEST_FALSE_BOOLEAN_PARAM );
+    meta.setSafeModeEnabled( Boolean.parseBoolean( TEST_FALSE_BOOLEAN_PARAM ) );
+
+    // Gather metrics
+    action.setGatheringMetrics( TEST_FALSE_BOOLEAN_PARAM );
+    meta.setGatheringMetrics( Boolean.parseBoolean( TEST_FALSE_BOOLEAN_PARAM ) );
+
+    // The following only apply to Jobs
+
+    // Expanding remote job
+    action.setExpandingRemoteJob( TEST_FALSE_BOOLEAN_PARAM );
+    // Start copy name
+    action.setStartCopyName( TEST_START_COPY_NAME_PARAM );
+
+    // EXECUTE
+    //
     action.executeJob( meta, repository );
 
+    // VALIDATIONS
+    //
+
+    // Job
     verify( job ).setGatheringMetrics( Boolean.valueOf( TEST_FALSE_BOOLEAN_PARAM ) );
+    verify( job ).setLogLevel( LogLevel.getLogLevelForCode( TEST_LOG_LEVEL_PARAM ) );
+
+    // JobExecutionConfiguration
     verify( jobExecutionConfiguration ).setLogLevel( LogLevel.getLogLevelForCode( TEST_LOG_LEVEL_PARAM ) );
-    verify( jobExecutionConfiguration ).setClearingLog( Boolean.valueOf( TEST_TRUE_BOOLEAN_PARAM ) );
-    verify( jobExecutionConfiguration ).setSafeModeEnabled( Boolean.valueOf( TEST_FALSE_BOOLEAN_PARAM ) );
-    verify( jobExecutionConfiguration ).setExpandingRemoteJob( Boolean.valueOf( TEST_FALSE_BOOLEAN_PARAM ) );
+    verify( jobExecutionConfiguration ).setClearingLog( Boolean.parseBoolean( TEST_TRUE_BOOLEAN_PARAM ) );
+    verify( jobExecutionConfiguration ).setSafeModeEnabled( Boolean.parseBoolean( TEST_FALSE_BOOLEAN_PARAM ) );
+    verify( jobExecutionConfiguration ).setGatheringMetrics( Boolean.parseBoolean( TEST_FALSE_BOOLEAN_PARAM ) );
+
+    verify( jobExecutionConfiguration ).setExpandingRemoteJob( Boolean.parseBoolean( TEST_FALSE_BOOLEAN_PARAM ) );
     verify( jobExecutionConfiguration ).setStartCopyName( TEST_START_COPY_NAME_PARAM );
   }
 
   public class TestAuthorizationPolicy implements IAuthorizationPolicy {
 
-    List<String> allowedActions = new ArrayList<String>();
+    List<String> allowedActions = new ArrayList<>();
 
     @Override
     public List<String> getAllowedActions( String arg0 ) {
@@ -445,7 +494,7 @@ public class PdiActionTest {
 
   public class TestAuthorizationPolicyNoExecute implements IAuthorizationPolicy {
 
-    List<String> allowedActions = new ArrayList<String>();
+    List<String> allowedActions = new ArrayList<>();
 
     @Override
     public List<String> getAllowedActions( String arg0 ) {
@@ -461,5 +510,44 @@ public class PdiActionTest {
       }
       return true;
     }
+  }
+
+  /**
+   * Returns a PdiAction that does not override any configuration.
+   *
+   * @return a PdiAction that does not override any configuration
+   */
+  private PdiAction getSpyPdiAction() {
+    return getSpyPdiAction( null, null, null );
+  }
+
+  /**
+   * Returns a PdiAction that will override the configuration based on the given parameters.
+   * Passing a null for any of the configurations, will result in not existing the corresponding property.
+   *
+   * @param gatherMetrics the value for the Gather Metrics configuration
+   * @param safeMode      the value for the Safe Mode configuration
+   * @param logLevel      the value for the Log Level configuration
+   * @return a PdiAction that will override the configuration based on the given parameters
+   */
+  private PdiAction getSpyPdiAction( String gatherMetrics, String safeMode, String logLevel ) {
+    Properties props = mock( Properties.class );
+
+    if ( null != gatherMetrics ) {
+      doReturn( gatherMetrics ).when( props ).getProperty( PdiAction.GATHER_METRICS_PROPERTY );
+    }
+
+    if ( null != safeMode ) {
+      doReturn( safeMode ).when( props ).getProperty( PdiAction.SAFE_MODE_PROPERTY );
+    }
+
+    if ( null != logLevel ) {
+      doReturn( logLevel ).when( props ).getProperty( PdiAction.LOG_LEVEL_PROPERTY );
+    }
+
+    PdiAction spiedPdiAction = spy( new PdiAction() );
+    doReturn( props ).when( spiedPdiAction ).getPluginSettings();
+
+    return spiedPdiAction;
   }
 }
