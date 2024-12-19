@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.pentaho.di.repository.filerep.KettleFileRepositoryMeta;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
@@ -51,23 +52,22 @@ public class PdiContentGeneratorTest {
   private PdiContentGenerator pdiContentGenerator;
   private OutputStream outputStream;
   private RepositoryFile repositoryFile;
-  //private QuartzScheduler scheduler;
   private PdiAction pdiAction;
 
   @Before
   public void setUp() throws Exception {
-    System.setProperty( "java.naming.factory.initial", "org.osjava.sj.SimpleContextFactory" ); //$NON-NLS-1$ //$NON-NLS-2$
-    System.setProperty( "org.osjava.sj.root", SOLUTION_REPOSITORY ); //$NON-NLS-1$ //$NON-NLS-2$
-    System.setProperty( "org.osjava.sj.delimiter", "/" ); //$NON-NLS-1$ //$NON-NLS-2$
+    System.setProperty( "java.naming.factory.initial", "org.osjava.sj.SimpleContextFactory" );
+    System.setProperty( "org.osjava.sj.root", SOLUTION_REPOSITORY );
+    System.setProperty( "org.osjava.sj.delimiter", "/" );
 
-    System.setProperty( "PENTAHO_SYS_CFG_PATH", new File( SOLUTION_REPOSITORY + "/pentaho.xml" ).getAbsolutePath() ); //$NON-NLS-2$
+    System.setProperty( "PENTAHO_SYS_CFG_PATH", new File( SOLUTION_REPOSITORY + "/pentaho.xml" ).getAbsolutePath() );
 
     IPentahoSession session = new StandaloneSession();
     PentahoSessionHolder.setSession( session );
 
     pdiContentGenerator = new PdiContentGenerator();
 
-    pdiAction = new PdiAction();
+    pdiAction = getSpyPdiAction();
     pdiAction.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
     pdiContentGenerator.setPdiAction( pdiAction );
 
@@ -76,13 +76,9 @@ public class PdiContentGeneratorTest {
     pdiContentGenerator.setOutputStream( outputStream );
     pdiContentGenerator.setRepositoryFile( repositoryFile );
 
-    //scheduler = new QuartzScheduler();
-    //scheduler.start();
-
     mp.define( IUserRoleListService.class, StubUserRoleListService.class );
     mp.define( UserDetailsService.class, StubUserDetailService.class );
     mp.defineInstance( IAuthorizationPolicy.class, new TestAuthorizationPolicy() );
-    //mp.defineInstance( IScheduler.class, scheduler );
 
     mp.define( ISolutionEngine.class, SolutionEngine.class );
     FileSystemBackedUnifiedRepository repo =  new FileSystemBackedUnifiedRepository( SOLUTION_REPOSITORY );
@@ -97,27 +93,22 @@ public class PdiContentGeneratorTest {
   }
 
   @Test
-  public void testExecuteSuccess_KTR() {
+  public void testExecuteSuccess_KTR() throws Exception {
     testExecuteSuccess( "/org/pentaho/platform/plugin/kettle/PdiContentGeneratorTest_success.ktr", "PdiContentGeneratorTest_success.ktr" );
   }
 
   @Test
-  public void testExecuteSuccess_KJB() {
+  public void testExecuteSuccess_KJB() throws Exception {
     testExecuteSuccess( "/org/pentaho/platform/plugin/kettle/PdiContentGeneratorTest_success.kjb", "PdiContentGeneratorTest_success.kjb" );
   }
 
-  private void testExecuteSuccess(  String path, String name  ) {
+  private void testExecuteSuccess( String path, String name ) throws Exception {
     when( repositoryFile.getPath() ).thenReturn( path );
-    when( repositoryFile.getName() ).thenReturn( path );
-    try {
-      pdiContentGenerator.execute();
-      String output = pdiContentGenerator.getOutputStringBuilder().toString();
-      assertTrue( output.contains( Messages.getInstance().getString( "PdiAction.STATUS_SUCCESS_HEADING" ) ) );
-    } catch ( Exception ex ) {
-      // There should be no exception throws in this case
-      ex.printStackTrace();
-      fail( "Exception in executing transformation " + ex );
-    }
+    when( repositoryFile.getName() ).thenReturn( name );
+
+    pdiContentGenerator.execute();
+    String output = pdiContentGenerator.getOutputStringBuilder().toString();
+    assertTrue( output.contains( Messages.getInstance().getString( "PdiAction.STATUS_SUCCESS_HEADING" ) ) );
   }
 
   @Test
@@ -133,6 +124,7 @@ public class PdiContentGeneratorTest {
   private void testExecuteFailure( String path, String name ) {
     when( repositoryFile.getPath() ).thenReturn( path );
     when( repositoryFile.getName() ).thenReturn( name );
+
     try {
       pdiContentGenerator.execute();
     } catch ( Exception ex ) {
@@ -140,14 +132,16 @@ public class PdiContentGeneratorTest {
     }
   }
 
-  public class TestAuthorizationPolicy implements IAuthorizationPolicy {
+  static class TestAuthorizationPolicy implements IAuthorizationPolicy {
+    private static final String ACTION_READ = "org.pentaho.repository.read";
+    private static final String ACTION_CREATE = "org.pentaho.repository.create";
 
-    List<String> allowedActions = new ArrayList<String>();
+    List<String> allowedActions = new ArrayList<>();
 
     @Override
     public List<String> getAllowedActions( String arg0 ) {
-      allowedActions.add( "org.pentaho.repository.read" );
-      allowedActions.add( "org.pentaho.repository.create" );
+      allowedActions.add( ACTION_READ );
+      allowedActions.add( ACTION_CREATE );
       return allowedActions;
     }
 
@@ -157,4 +151,42 @@ public class PdiContentGeneratorTest {
     }
   }
 
+  /**
+   * Returns a PdiAction that does not override any configuration.
+   *
+   * @return a PdiAction that does not override any configuration
+   */
+  private PdiAction getSpyPdiAction() {
+    return getSpyPdiAction( null, null, null );
+  }
+
+  /**
+   * Returns a PdiAction that will override the configuration based on the given parameters.
+   * Passing a null for any of the configurations, will result in not existing the corresponding property.
+   *
+   * @param gatherMetrics the value for the Gather Metrics configuration
+   * @param safeMode      the value for the Safe Mode configuration
+   * @param logLevel      the value for the Log Level configuration
+   * @return a PdiAction that will override the configuration based on the given parameters
+   */
+  private PdiAction getSpyPdiAction( String gatherMetrics, String safeMode, String logLevel ) {
+    Properties props = mock( Properties.class );
+
+    if ( null != gatherMetrics ) {
+      doReturn( gatherMetrics ).when( props ).getProperty( PdiAction.GATHER_METRICS_PROPERTY );
+    }
+
+    if ( null != safeMode ) {
+      doReturn( safeMode ).when( props ).getProperty( PdiAction.SAFE_MODE_PROPERTY );
+    }
+
+    if ( null != logLevel ) {
+      doReturn( logLevel ).when( props ).getProperty( PdiAction.LOG_LEVEL_PROPERTY );
+    }
+
+    PdiAction spiedPdiAction = spy( new PdiAction() );
+    doReturn( props ).when( spiedPdiAction ).getPluginSettings();
+
+    return spiedPdiAction;
+  }
 }
