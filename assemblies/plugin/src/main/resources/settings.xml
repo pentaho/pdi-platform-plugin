@@ -1,3 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <settings>
+
+  <!-- Use the following to force the behaviour of the "gathering metrics"
+   configuration when executing transformations or jobs in this server.
+   If this is commented, or if the provided value is empty or set to spaces
+   only, the execution will use whatever configuration it had previously.
+
+   Possible values:
+     - true: the metrics will always be collected
+     - false: no metrics will never be collected
+
+   An unrecognized value is equivalent to "false".
+   -->
+
+  <gather_metrics>false</gather_metrics>
+
+
+  <!-- Use the following to force the behaviour of the "safe mode"
+   configuration when executing transformations or jobs in this server.
+   If this is commented, or if the provided value is empty or set to spaces
+   only, the execution will use whatever configuration it had previously.
+
+   Possible values:
+     - true: run with safe mode
+     - false: run without safe mode
+
+   An unrecognized value is equivalent to "false".
+   -->
+
+  <!--safe_mode>false</safe_mode-->
+
+
+  <!-- Use the following to force the "log level" configuration when executing
+   transformations or jobs in this server.
+   If this is commented, or if the provided value is empty or set to spaces
+   only, the execution will use whatever configuration it had previously.
+
+   Possible values:
+     - Nothing: no logging output
+     - Error: only show errors
+     - Minimal: minimal logging
+     - Basic: basic logging
+     - Detailed: detailed logging output
+     - Debug: very detailed output
+     - Row Level: row level logging, this generates a lot of log data
+
+   An unrecognized value is equivalent to "Basic".
+   -->
+
+  <!--log_level>Basic</log_level-->
+
 </settings>
