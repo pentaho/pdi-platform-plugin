@@ -830,7 +830,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
    *
    * @param stepName
    * @param trans the transformation
-   * @return true if
+   * @return
    * @throws KettleException
    */
   protected boolean registerAsProducer( String stepName, Trans trans ) throws KettleException {
