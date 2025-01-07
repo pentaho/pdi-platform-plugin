@@ -43,7 +43,7 @@
      - Basic: basic logging
      - Detailed: detailed logging output
      - Debug: very detailed output
-     - Row Level: row level logging, this generates a lot of log data
+     - Rowlevel: row level logging, this generates a lot of log data
 
    An unrecognized value is equivalent to "Basic".
    -->
