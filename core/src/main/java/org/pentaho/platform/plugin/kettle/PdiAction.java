@@ -14,6 +14,7 @@
 package org.pentaho.platform.plugin.kettle;
 
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.HashMap;
@@ -23,6 +24,7 @@ import java.util.Properties;
 import java.util.UUID;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.commons.connection.IPentahoResultSet;
@@ -30,10 +32,13 @@ import org.pentaho.commons.connection.memory.MemoryMetaData;
 import org.pentaho.commons.connection.memory.MemoryResultSet;
 import org.pentaho.di.ExecutionConfiguration;
 import org.pentaho.di.base.AbstractMeta;
+import org.pentaho.di.connections.vfs.provider.ConnectionFileProvider;
 import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.exception.KettleMissingPluginsException;
 import org.pentaho.di.core.exception.KettleSecurityException;
 import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.exception.KettleValueException;
+import org.pentaho.di.core.exception.KettleXMLException;
 import org.pentaho.di.core.logging.KettleLogStore;
 import org.pentaho.di.core.logging.LogLevel;
 import org.pentaho.di.core.logging.LoggingBuffer;
@@ -43,6 +48,7 @@ import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.core.variables.VariableSpace;
+import org.pentaho.di.core.variables.Variables;
 import org.pentaho.di.core.xml.XMLHandlerCache;
 import org.pentaho.di.job.Job;
 import org.pentaho.di.job.JobConfiguration;
@@ -73,6 +79,7 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.plugin.action.kettle.KettleSystemListener;
 import org.pentaho.platform.plugin.action.messages.Messages;
 import org.pentaho.platform.plugin.kettle.security.policy.rolebased.actions.RepositoryExecuteAction;
+import org.pentaho.platform.util.ActionUtil;
 import org.pentaho.di.repository.RepositoryConnectionUtils;
 
 /**
@@ -134,6 +141,9 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
   private String injectorStep = null;
 
   private Map<String, Object> varArgs = new HashMap<>();
+
+  private InputStream inputStream;
+  private boolean isVfs;
 
   /**
    * The name of the repository to use
@@ -249,7 +259,10 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     pdiUserAppender = KettleLogStore.getAppender();
     Repository repository = connectToRepository();
 
+    checkIfPvfs();
+
     try {
+
       if ( transformation != null ) {
         executeTransformation( repository );
       } else if ( job != null ) {
@@ -265,6 +278,20 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     }
 
     XMLHandlerCache.getInstance().clear();
+  }
+
+  protected boolean isPvfs( String path ) {
+    return StringUtils.isNotEmpty( path ) && path.startsWith( ConnectionFileProvider.ROOT_URI );
+  }
+
+  private void checkIfPvfs() {
+    if ( this.parameters != null ) {
+      String inputFile = (String) varArgs.get( ActionUtil.QUARTZ_STREAMPROVIDER_INPUT_FILE );
+      if ( isPvfs( inputFile ) ) {
+        log.info( "Using PVFS for input file " + inputFile );
+        this.isVfs = true;
+      }
+    }
   }
 
   private TransMeta createTransMeta( Repository repository ) throws ActionExecutionException {
@@ -496,19 +523,28 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
   protected void executeTransformation( Repository repository ) throws ActionExecutionException {
     TransMeta transMeta = null;
 
-    // try loading from internal repository before falling back onto kettle
-    // the repository passed here is not used to load the transformation it is used
-    // to populate available databases, etc in "standard" kettle fashion
-    try {
-      transMeta = createTransMetaJCR( repository );
-    } catch ( Throwable t ) {
-      // ignored
-    }
+    if ( isVfs && this.inputStream != null ) {
+      try {
+        transMeta =
+            new TransMeta( inputStream, repository, true, Variables.getADefaultVariableSpace(),
+                ( msg, t1, t2 ) -> false );
+      } catch ( KettleXMLException | KettleMissingPluginsException e ) {
+        throw new ActionExecutionException( e );
+      }
+    } else {
+      // try loading from internal repository before falling back onto kettle
+      // the repository passed here is not used to load the transformation it is used
+      // to populate available databases, etc in "standard" kettle fashion
+      try {
+        transMeta = createTransMetaJCR( repository );
+      } catch ( Throwable t ) {
+        // ignored
+      }
 
-    if ( transMeta == null ) {
-      transMeta = createTransMeta( repository );
+      if ( transMeta == null ) {
+        transMeta = createTransMeta( repository );
+      }
     }
-
     if ( transMeta == null ) {
       throw new IllegalStateException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
         .getErrorString( "PdiAction.ERROR_0004_FAILED_TRANSMETA_CREATION" ) );
@@ -845,19 +881,30 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
   protected void executeJob( Repository repository ) throws ActionExecutionException {
     JobMeta jobMeta = null;
 
-    // try loading from internal repository before falling back onto kettle
-    // the repository passed here is not used to load the job it is used
-    // to populate available databases, etc in "standard" kettle fashion
-    try {
-      jobMeta = createJobMetaJCR( repository );
-    } catch ( Throwable t ) {
-      // ignored
+    if ( isVfs ) {
+      log.debug( "using vfs, inputStream=" + inputStream );
     }
+    if ( isVfs && this.inputStream != null ) {
+      try {
+        jobMeta = new JobMeta( inputStream, repository, ( msg, t1, t2 ) -> false );
+      } catch ( KettleXMLException e ) {
+        throw new ActionExecutionException( e );
+      }
+    } else {
 
-    if ( jobMeta == null ) {
-      jobMeta = createJobMeta( repository );
+      // try loading from internal repository before falling back onto kettle
+      // the repository passed here is not used to load the job it is used
+      // to populate available databases, etc in "standard" kettle fashion
+      try {
+        jobMeta = createJobMetaJCR( repository );
+      } catch ( Throwable t ) {
+        // ignored
+      }
+
+      if ( jobMeta == null ) {
+        jobMeta = createJobMeta( repository );
+      }
     }
-
     if ( jobMeta == null ) {
       throw new IllegalStateException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
         .getErrorString( "PdiAction.ERROR_0005_FAILED_JOBMETA_CREATION" ) );
@@ -1241,6 +1288,14 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
 
   public void setStartCopyName( String startCopyName ) {
     this.startCopyName = startCopyName;
+  }
+
+  public void setInputStream( InputStream inputStream ) {
+    this.inputStream = inputStream;
+  }
+
+  public InputStream getInputStream() {
+    return inputStream;
   }
 
   /**
