@@ -19,6 +19,7 @@ import java.text.MessageFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.job.JobMeta;
 import org.pentaho.di.repository.RepositoriesMeta;
 import org.pentaho.di.repository.Repository;
@@ -37,22 +38,22 @@ public class EngineMetaLoader {
     this.repository = repository;
   }
 
-  public TransMeta loadTransMeta( String directory, String filename ) throws FileNotFoundException {
+  public TransMeta loadTransMeta( String directory, String filename, VariableSpace parent ) throws FileNotFoundException {
     if ( directory == null || filename == null ) {
       throw new IllegalArgumentException( Messages.getInstance().getErrorString(
           "EngineMetaLoader.ERROR_0001_DIR_OR_FILENAME_NULL" ) ); //$NON-NLS-1$
     }
 
-    return load( directory, filename, TransMeta.class );
+    return load( directory, filename, TransMeta.class, parent );
   }
 
-  public JobMeta loadJobMeta( String directory, String filename ) throws FileNotFoundException {
+  public JobMeta loadJobMeta( String directory, String filename, VariableSpace parent ) throws FileNotFoundException {
     if ( directory == null || filename == null ) {
       throw new IllegalArgumentException( Messages.getInstance().getErrorString(
           "EngineMetaLoader.ERROR_0001_DIR_OR_FILENAME_NULL" ) ); //$NON-NLS-1$
     }
 
-    return load( directory, filename, JobMeta.class );
+    return load( directory, filename, JobMeta.class, parent );
   }
 
   /**
@@ -64,7 +65,7 @@ public class EngineMetaLoader {
    * @throws FileNotFoundException
    */
   @SuppressWarnings( "unchecked" )
-  private <T> T load( final String directoryName, final String fileName, Class<T> metaType )
+  private <T> T load( final String directoryName, final String fileName, Class<T> metaType, VariableSpace parent )
     throws FileNotFoundException {
 
     if ( log.isDebugEnabled() ) {
@@ -78,9 +79,9 @@ public class EngineMetaLoader {
         // Load the transformation from the repository the "new way"
         RepositoryDirectoryInterface directory = repository.loadRepositoryDirectoryTree().findDirectory( directoryName );
         if ( metaType == TransMeta.class ) {
-          meta = (T) repository.loadTransformation( fileName, directory, null, true, null );
+          meta = (T) repository.loadTransformation( fileName, directory, null, true, null, parent );
         } else {
-          meta = (T) repository.loadJob( fileName, directory, null, null );
+          meta = (T) repository.loadJob( fileName, directory, null, null, parent );
         }
       } else {
         // temporary debug for testing failure cases on mac

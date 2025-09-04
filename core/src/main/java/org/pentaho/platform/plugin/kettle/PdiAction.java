@@ -294,7 +294,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     }
   }
 
-  private TransMeta createTransMeta( Repository repository ) throws ActionExecutionException {
+  private TransMeta createTransMeta( Repository repository, VariableSpace parent ) throws ActionExecutionException {
     // TODO: do we need to set a parameter on the job or trans meta called
     // ${pentaho.solutionpath} to mimic the old in-line xml replacement behavior
     // (see scm history for an illustration of this)?
@@ -304,19 +304,19 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     EngineMetaLoader engineMetaUtil = new EngineMetaLoader( repository );
 
     try {
-      return engineMetaUtil.loadTransMeta( directory, transformation );
+      return engineMetaUtil.loadTransMeta( directory, transformation, parent );
     } catch ( FileNotFoundException e ) {
       throw new ActionExecutionException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
           .getErrorString( "PdiAction.ERROR_0006_FAILED_TRANSMETA_CREATION", directory, transformation ), e );
     }
   }
 
-  private TransMeta createTransMetaJCR( Repository repository ) throws ActionExecutionException {
+  private TransMeta createTransMetaJCR( Repository repository, VariableSpace parent ) throws ActionExecutionException {
     try {
       IUnifiedRepository unifiedRepository = PentahoSystem.get( IUnifiedRepository.class, null );
       RepositoryFile transFile = unifiedRepository.getFile( idToPath( transformation ) );
 
-      return repository.loadTransformation( new StringObjectId( (String) transFile.getId() ), null );
+      return repository.loadTransformation( new StringObjectId( (String) transFile.getId() ), null, parent );
     } catch ( Throwable e ) {
       throw new ActionExecutionException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
           .getErrorString( "PdiAction.ERROR_0006_FAILED_TRANSMETA_CREATION", directory, transformation ), e );
@@ -432,7 +432,7 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     return null;
   }
 
-  private JobMeta createJobMeta( Repository repository ) throws ActionExecutionException {
+  private JobMeta createJobMeta( Repository repository, VariableSpace parent ) throws ActionExecutionException {
     // TODO: do we need to set a parameter on the job or trans meta called
     // ${pentaho.solutionpath} to mimic the old in-line xml replacement behavior
     // (see scm history for an illustration of this)?
@@ -442,19 +442,19 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     EngineMetaLoader engineMetaUtil = new EngineMetaLoader( repository );
 
     try {
-      return engineMetaUtil.loadJobMeta( directory, job );
+      return engineMetaUtil.loadJobMeta( directory, job, parent );
     } catch ( FileNotFoundException e ) {
       throw new ActionExecutionException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
           .getErrorString( "PdiAction.ERROR_0007_FAILED_JOBMETA_CREATION", directory, job ), e );
     }
   }
 
-  private JobMeta createJobMetaJCR( Repository repository ) throws ActionExecutionException {
+  private JobMeta createJobMetaJCR( Repository repository, VariableSpace parent ) throws ActionExecutionException {
     try {
       IUnifiedRepository unifiedRepository = PentahoSystem.get( IUnifiedRepository.class, null );
       RepositoryFile jobFile = unifiedRepository.getFile( idToPath( job ) );
 
-      return repository.loadJob( new StringObjectId( (String) jobFile.getId() ), null );
+      return repository.loadJob( new StringObjectId( (String) jobFile.getId() ), null, parent );
     } catch ( Throwable e ) {
       throw new ActionExecutionException( org.pentaho.platform.plugin.kettle.messages.Messages.getInstance()
           .getErrorString( "PdiAction.ERROR_0007_FAILED_JOBMETA_CREATION", directory, job ), e );
@@ -488,14 +488,18 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
       }
     }
 
+    populateVariables( varSpace );
+
+    for ( Map.Entry<String, Object> entry : varArgs.entrySet() ) {
+      varSpace.setVariable( entry.getKey(), ( entry.getValue() != null ) ? entry.getValue().toString() : null );
+    }
+  }
+
+  private void populateVariables( VariableSpace varSpace ) {
     if ( variables != null ) {
       for ( Map.Entry<String, String> entry : variables.entrySet() ) {
         varSpace.setVariable( entry.getKey(), entry.getValue() );
       }
-    }
-
-    for ( Map.Entry<String, Object> entry : varArgs.entrySet() ) {
-      varSpace.setVariable( entry.getKey(), ( entry.getValue() != null ) ? entry.getValue().toString() : null );
     }
   }
 
@@ -523,10 +527,13 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
   protected void executeTransformation( Repository repository ) throws ActionExecutionException {
     TransMeta transMeta = null;
 
+    VariableSpace varSpace = Variables.getADefaultVariableSpace();
+    populateVariables( varSpace );
+
     if ( isVfs && this.inputStream != null ) {
       try {
         transMeta =
-            new TransMeta( inputStream, repository, true, Variables.getADefaultVariableSpace(),
+            new TransMeta( inputStream, repository, true, varSpace,
                 ( msg, t1, t2 ) -> false );
       } catch ( KettleXMLException | KettleMissingPluginsException e ) {
         throw new ActionExecutionException( e );
@@ -536,13 +543,13 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
       // the repository passed here is not used to load the transformation it is used
       // to populate available databases, etc in "standard" kettle fashion
       try {
-        transMeta = createTransMetaJCR( repository );
+        transMeta = createTransMetaJCR( repository, varSpace );
       } catch ( Throwable t ) {
         // ignored
       }
 
       if ( transMeta == null ) {
-        transMeta = createTransMeta( repository );
+        transMeta = createTransMeta( repository, varSpace );
       }
     }
     if ( transMeta == null ) {
@@ -881,12 +888,15 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
   protected void executeJob( Repository repository ) throws ActionExecutionException {
     JobMeta jobMeta = null;
 
+    VariableSpace varSpace = Variables.getADefaultVariableSpace();
+    populateVariables( varSpace );
+
     if ( isVfs ) {
       log.debug( "using vfs, inputStream=" + inputStream );
     }
     if ( isVfs && this.inputStream != null ) {
       try {
-        jobMeta = new JobMeta( inputStream, repository, ( msg, t1, t2 ) -> false );
+        jobMeta = new JobMeta( inputStream, repository, ( msg, t1, t2 ) -> false, varSpace );
       } catch ( KettleXMLException e ) {
         throw new ActionExecutionException( e );
       }
@@ -896,13 +906,13 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
       // the repository passed here is not used to load the job it is used
       // to populate available databases, etc in "standard" kettle fashion
       try {
-        jobMeta = createJobMetaJCR( repository );
+        jobMeta = createJobMetaJCR( repository, varSpace );
       } catch ( Throwable t ) {
         // ignored
       }
 
       if ( jobMeta == null ) {
-        jobMeta = createJobMeta( repository );
+        jobMeta = createJobMeta( repository, varSpace );
       }
     }
     if ( jobMeta == null ) {
