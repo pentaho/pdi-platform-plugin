@@ -13,11 +13,6 @@
 
 package org.pentaho.platform.plugin.kettle;
 
-import java.io.FileNotFoundException;
-import java.text.MessageFormat;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.job.JobMeta;
@@ -27,6 +22,11 @@ import org.pentaho.di.repository.RepositoryDirectoryInterface;
 import org.pentaho.di.repository.RepositoryMeta;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.platform.plugin.kettle.messages.Messages;
+
+import java.io.FileNotFoundException;
+import java.text.MessageFormat;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class EngineMetaLoader {
 
@@ -79,7 +79,7 @@ public class EngineMetaLoader {
         // Load the transformation from the repository the "new way"
         RepositoryDirectoryInterface directory = repository.loadRepositoryDirectoryTree().findDirectory( directoryName );
         if ( metaType == TransMeta.class ) {
-          meta = (T) repository.loadTransformation( fileName, directory, null, true, null, parent );
+          meta = (T) repository.loadTransformation( repository.getBowl(), fileName, directory, null, true, null, parent );
         } else {
           meta = (T) repository.loadJob( fileName, directory, null, null, parent );
         }
