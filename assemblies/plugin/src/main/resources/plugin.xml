@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<plugin title="Kettle Platform Plugin" name="pdi-platform-plugin">
+<plugin title="${title-pdi-platform-plugin}" name="pdi-platform-plugin"
+        description="${description-pdi-platform-plugin}" resourcebundle="resources/messages">
 
   <static-paths>
     <!-- this translates to /pentaho/content/pdi-platform-plugin/resources/* -->
