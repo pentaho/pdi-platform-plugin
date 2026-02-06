@@ -474,6 +474,278 @@ public class PdiActionTest {
     verify( jobExecutionConfiguration ).setStartCopyName( TEST_START_COPY_NAME_PARAM );
   }
 
+  // ===========================================================================================
+  // Tests for KETTLE_USE_STORED_VARIABLES feature (variable source priority)
+  // ===========================================================================================
+
+  @Test
+  public void testIsUseStoredVariables_NotSet_ReturnsFalse() {
+    // Default behavior when property is not set
+    System.clearProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY );
+    PdiAction action = getSpyPdiAction();
+    assertFalse( "Should return false when property is not set", action.isUseStoredVariables() );
+  }
+
+  @Test
+  public void testIsUseStoredVariables_SetToY_ReturnsTrue() {
+    try {
+      System.setProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY, "Y" );
+      PdiAction action = getSpyPdiAction();
+      assertTrue( "Should return true when property is 'Y'", action.isUseStoredVariables() );
+    } finally {
+      System.clearProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY );
+    }
+  }
+
+  @Test
+  public void testIsUseStoredVariables_SetToLowercaseY_ReturnsTrue() {
+    try {
+      System.setProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY, "y" );
+      PdiAction action = getSpyPdiAction();
+      assertTrue( "Should return true when property is 'y'", action.isUseStoredVariables() );
+    } finally {
+      System.clearProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY );
+    }
+  }
+
+  @Test
+  public void testIsUseStoredVariables_SetToTrue_ReturnsTrue() {
+    try {
+      System.setProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY, "true" );
+      PdiAction action = getSpyPdiAction();
+      assertTrue( "Should return true when property is 'true'", action.isUseStoredVariables() );
+    } finally {
+      System.clearProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY );
+    }
+  }
+
+  @Test
+  public void testIsUseStoredVariables_SetToTRUE_ReturnsTrue() {
+    try {
+      System.setProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY, "TRUE" );
+      PdiAction action = getSpyPdiAction();
+      assertTrue( "Should return true when property is 'TRUE'", action.isUseStoredVariables() );
+    } finally {
+      System.clearProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY );
+    }
+  }
+
+  @Test
+  public void testIsUseStoredVariables_SetToN_ReturnsFalse() {
+    try {
+      System.setProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY, "N" );
+      PdiAction action = getSpyPdiAction();
+      assertFalse( "Should return false when property is 'N'", action.isUseStoredVariables() );
+    } finally {
+      System.clearProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY );
+    }
+  }
+
+  @Test
+  public void testIsUseStoredVariables_SetToFalse_ReturnsFalse() {
+    try {
+      System.setProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY, "false" );
+      PdiAction action = getSpyPdiAction();
+      assertFalse( "Should return false when property is 'false'", action.isUseStoredVariables() );
+    } finally {
+      System.clearProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY );
+    }
+  }
+
+  @Test
+  public void testIsUseStoredVariables_SetToInvalidValue_ReturnsFalse() {
+    try {
+      System.setProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY, "invalid" );
+      PdiAction action = getSpyPdiAction();
+      assertFalse( "Should return false when property has invalid value", action.isUseStoredVariables() );
+    } finally {
+      System.clearProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY );
+    }
+  }
+
+  @Test
+  public void testResolveVariableValue_UseStoredVariables_ReturnsStoredValue() {
+    try {
+      System.setProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY, "Y" );
+      // Also set a kettle property that should be ignored
+      System.setProperty( "testVar", "kettlePropertiesValue" );
+
+      PdiAction action = getSpyPdiAction();
+      String result = action.resolveVariableValue( "testVar", "storedValue" );
+
+      assertEquals( "Should return stored value when USE_STORED_VARIABLES is Y", "storedValue", result );
+    } finally {
+      System.clearProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY );
+      System.clearProperty( "testVar" );
+    }
+  }
+
+  @Test
+  public void testResolveVariableValue_Default_PrefersKettleProperties() {
+    try {
+      System.clearProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY );
+      System.setProperty( "testVar", "kettlePropertiesValue" );
+
+      PdiAction action = getSpyPdiAction();
+      String result = action.resolveVariableValue( "testVar", "storedValue" );
+
+      assertEquals( "Should return kettle.properties value by default", "kettlePropertiesValue", result );
+    } finally {
+      System.clearProperty( "testVar" );
+    }
+  }
+
+  @Test
+  public void testResolveVariableValue_Default_FallsBackToStoredWhenKettlePropertyMissing() {
+    System.clearProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY );
+    // Ensure the variable is not in system properties
+    System.clearProperty( "testVarNotInKettle" );
+
+    PdiAction action = getSpyPdiAction();
+    String result = action.resolveVariableValue( "testVarNotInKettle", "storedValue" );
+
+    assertEquals( "Should fall back to stored value when kettle.properties doesn't have the variable", "storedValue", result );
+  }
+
+  @Test
+  public void testResolveVariableValue_UseStoredVariables_WithNullStoredValue() {
+    try {
+      System.setProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY, "Y" );
+      System.setProperty( "testVar", "kettlePropertiesValue" );
+
+      PdiAction action = getSpyPdiAction();
+      String result = action.resolveVariableValue( "testVar", null );
+
+      assertEquals( "Should return null stored value when USE_STORED_VARIABLES is Y", null, result );
+    } finally {
+      System.clearProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY );
+      System.clearProperty( "testVar" );
+    }
+  }
+
+  @Test
+  public void testResolveVariableValue_Default_WithNullStoredValueAndNoKettleProperty() {
+    System.clearProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY );
+    System.clearProperty( "testVarNotExists" );
+
+    PdiAction action = getSpyPdiAction();
+    String result = action.resolveVariableValue( "testVarNotExists", null );
+
+    assertEquals( "Should return null when both sources are null/missing", null, result );
+  }
+
+  @Test
+  public void testResolveVariableValue_Default_WithEmptyKettlePropertyValue() {
+    try {
+      System.clearProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY );
+      System.setProperty( "testVar", "" );
+
+      PdiAction action = getSpyPdiAction();
+      String result = action.resolveVariableValue( "testVar", "storedValue" );
+
+      // Empty string is a valid value, should be used over stored value
+      assertEquals( "Should return empty kettle.properties value (not fall back to stored)", "", result );
+    } finally {
+      System.clearProperty( "testVar" );
+    }
+  }
+
+  /**
+   * End-to-end test: Transformation execution uses stored variable value when USE_STORED_VARIABLES=Y
+   */
+  @Test
+  public void testTransformationExecution_UseStoredVariables_UsesStoredValue() throws Exception {
+    try {
+      // Configure to use stored variables
+      System.setProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY, "Y" );
+      // Set a kettle property that should be IGNORED
+      System.setProperty( "customVariable", "fromKettleProperties" );
+
+      Map<String, String> variables = new HashMap<>();
+      variables.put( "customVariable", "fromStoredValue" );
+
+      PdiAction action = getSpyPdiAction();
+      action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
+      action.setArguments( new String[] { "dummyArg" } );
+      action.setVariables( variables );
+      action.setDirectory( SOLUTION_REPOSITORY );
+      action.setTransformation( "/org/pentaho/platform/plugin/kettle/PdiActionTest_testTransformationVariableOverrides.ktr" );
+      action.execute();
+
+      List<String> lines = FileUtils.readLines( new File( "testTransformationVariableOverrides.out.txt" ) );
+      assertTrue( "File should not be empty", lines.size() > 0 );
+      String rowData = (String) lines.get( 1 );
+      String[] columnData = rowData.split( "\\|" );
+
+      assertEquals( "Should use stored value when USE_STORED_VARIABLES=Y", "fromStoredValue", columnData[5].trim() );
+    } finally {
+      System.clearProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY );
+      System.clearProperty( "customVariable" );
+    }
+  }
+
+  /**
+   * End-to-end test: Transformation execution uses kettle.properties value by default (when variable exists in kettle.properties)
+   */
+  @Test
+  public void testTransformationExecution_Default_PrefersKettleProperties() throws Exception {
+    try {
+      // Clear the flag to use default behavior
+      System.clearProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY );
+      // Set a kettle property that should be USED
+      System.setProperty( "customVariable", "fromKettleProperties" );
+
+      Map<String, String> variables = new HashMap<>();
+      variables.put( "customVariable", "fromStoredValue" );
+
+      PdiAction action = getSpyPdiAction();
+      action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
+      action.setArguments( new String[] { "dummyArg" } );
+      action.setVariables( variables );
+      action.setDirectory( SOLUTION_REPOSITORY );
+      action.setTransformation( "/org/pentaho/platform/plugin/kettle/PdiActionTest_testTransformationVariableOverrides.ktr" );
+      action.execute();
+
+      List<String> lines = FileUtils.readLines( new File( "testTransformationVariableOverrides.out.txt" ) );
+      assertTrue( "File should not be empty", lines.size() > 0 );
+      String rowData = (String) lines.get( 1 );
+      String[] columnData = rowData.split( "\\|" );
+
+      assertEquals( "Should use kettle.properties value by default", "fromKettleProperties", columnData[5].trim() );
+    } finally {
+      System.clearProperty( "customVariable" );
+    }
+  }
+
+  /**
+   * End-to-end test: Transformation execution falls back to stored value when variable not in kettle.properties
+   */
+  @Test
+  public void testTransformationExecution_Default_FallsBackToStoredValue() throws Exception {
+    // Clear the flag to use default behavior
+    System.clearProperty( PdiAction.USE_STORED_VARIABLES_PROPERTY );
+    // Ensure variable is NOT in system properties
+    System.clearProperty( "customVariable" );
+
+    Map<String, String> variables = new HashMap<>();
+    variables.put( "customVariable", "fromStoredValue" );
+
+    PdiAction action = getSpyPdiAction();
+    action.setRepositoryName( KettleFileRepositoryMeta.REPOSITORY_TYPE_ID );
+    action.setArguments( new String[] { "dummyArg" } );
+    action.setVariables( variables );
+    action.setDirectory( SOLUTION_REPOSITORY );
+    action.setTransformation( "/org/pentaho/platform/plugin/kettle/PdiActionTest_testTransformationVariableOverrides.ktr" );
+    action.execute();
+
+    List<String> lines = FileUtils.readLines( new File( "testTransformationVariableOverrides.out.txt" ) );
+    assertTrue( "File should not be empty", lines.size() > 0 );
+    String rowData = (String) lines.get( 1 );
+    String[] columnData = rowData.split( "\\|" );
+
+    assertEquals( "Should fall back to stored value when not in kettle.properties", "fromStoredValue", columnData[5].trim() );
+  }
+
   public class TestAuthorizationPolicy implements IAuthorizationPolicy {
 
     List<String> allowedActions = new ArrayList<>();
