@@ -52,6 +52,7 @@ import org.pentaho.test.platform.engine.core.MicroPlatform;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -146,7 +147,7 @@ public class PdiActionTest {
     action.setTransformation( "/org/pentaho/platform/plugin/kettle/PdiActionTest_testTransformationVariableOverrides.ktr" );
     action.execute();
     assertArrayEquals( args, action.localTrans.getArguments() );
-    List<String> lines = FileUtils.readLines( new File( "testTransformationVariableOverrides.out.txt" ) );
+    List<String> lines = FileUtils.readLines( new File( "testTransformationVariableOverrides.out.txt" ), StandardCharsets.UTF_8 );
     assertTrue( "File \"testTransformationVariableOverrides.out.txt\" should not be empty", lines.size() > 0 );
     String rowData = (String) lines.get( 1 );
     // Columns are as follows:
@@ -672,7 +673,7 @@ public class PdiActionTest {
       action.setTransformation( "/org/pentaho/platform/plugin/kettle/PdiActionTest_testTransformationVariableOverrides.ktr" );
       action.execute();
 
-      List<String> lines = FileUtils.readLines( new File( "testTransformationVariableOverrides.out.txt" ) );
+      List<String> lines = FileUtils.readLines( new File( "testTransformationVariableOverrides.out.txt" ), StandardCharsets.UTF_8 );
       assertTrue( "File should not be empty", lines.size() > 0 );
       String rowData = (String) lines.get( 1 );
       String[] columnData = rowData.split( "\\|" );
@@ -706,7 +707,7 @@ public class PdiActionTest {
       action.setTransformation( "/org/pentaho/platform/plugin/kettle/PdiActionTest_testTransformationVariableOverrides.ktr" );
       action.execute();
 
-      List<String> lines = FileUtils.readLines( new File( "testTransformationVariableOverrides.out.txt" ) );
+      List<String> lines = FileUtils.readLines( new File( "testTransformationVariableOverrides.out.txt" ), StandardCharsets.UTF_8 );
       assertTrue( "File should not be empty", lines.size() > 0 );
       String rowData = (String) lines.get( 1 );
       String[] columnData = rowData.split( "\\|" );
@@ -738,13 +739,18 @@ public class PdiActionTest {
     action.setTransformation( "/org/pentaho/platform/plugin/kettle/PdiActionTest_testTransformationVariableOverrides.ktr" );
     action.execute();
 
-    List<String> lines = FileUtils.readLines( new File( "testTransformationVariableOverrides.out.txt" ) );
+    List<String> lines = FileUtils.readLines( new File( "testTransformationVariableOverrides.out.txt" ), StandardCharsets.UTF_8 );
     assertTrue( "File should not be empty", lines.size() > 0 );
     String rowData = (String) lines.get( 1 );
     String[] columnData = rowData.split( "\\|" );
 
     assertEquals( "Should fall back to stored value when not in kettle.properties", "fromStoredValue", columnData[5].trim() );
   }
+
+  // ===========================================================================================
+  // END Tests for KETTLE_USE_STORED_VARIABLES feature (variable source priority)
+  // ===========================================================================================
+
 
   public class TestAuthorizationPolicy implements IAuthorizationPolicy {
 
