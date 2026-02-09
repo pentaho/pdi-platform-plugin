@@ -513,10 +513,12 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
    * Resolves the value for a variable based on the configured variable source preference.
    * <p>
    * When {@code KETTLE_USE_STORED_VARIABLES} is not set or set to "N"/"false" (default):
-   * Uses the value from kettle.properties (via System.getProperty) if available, otherwise falls back to stored value.
+   * Uses the value from JVM system properties (via {@link System#getProperty(String)}, including those loaded
+   * from {@code kettle.properties}) if available, otherwise falls back to the stored value.
    * <p>
    * When {@code KETTLE_USE_STORED_VARIABLES} is set to "Y"/"true":
-   * Always uses the stored value, ignoring kettle.properties.
+   * Always uses the stored value, ignoring JVM system property overrides (for example, those from
+   * {@code kettle.properties}).
    *
    * @param variableName the name of the variable
    * @param storedValue the value that was stored

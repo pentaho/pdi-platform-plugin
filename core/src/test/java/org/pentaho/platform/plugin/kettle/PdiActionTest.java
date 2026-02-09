@@ -674,7 +674,7 @@ public class PdiActionTest {
       action.execute();
 
       List<String> lines = FileUtils.readLines( new File( "testTransformationVariableOverrides.out.txt" ), StandardCharsets.UTF_8 );
-      assertTrue( "File should not be empty", lines.size() > 0 );
+      assertTrue( "File should contain at least two lines (header + data)", lines.size() > 1 );
       String rowData = (String) lines.get( 1 );
       String[] columnData = rowData.split( "\\|" );
 
@@ -708,7 +708,7 @@ public class PdiActionTest {
       action.execute();
 
       List<String> lines = FileUtils.readLines( new File( "testTransformationVariableOverrides.out.txt" ), StandardCharsets.UTF_8 );
-      assertTrue( "File should not be empty", lines.size() > 0 );
+      assertTrue( "File should contain at least two lines (header + data)", lines.size() > 1 );
       String rowData = (String) lines.get( 1 );
       String[] columnData = rowData.split( "\\|" );
 
@@ -740,7 +740,7 @@ public class PdiActionTest {
     action.execute();
 
     List<String> lines = FileUtils.readLines( new File( "testTransformationVariableOverrides.out.txt" ), StandardCharsets.UTF_8 );
-    assertTrue( "File should not be empty", lines.size() > 0 );
+    assertTrue( "File should contain at least two lines (header + data)", lines.size() > 1 );
     String rowData = (String) lines.get( 1 );
     String[] columnData = rowData.split( "\\|" );
 
