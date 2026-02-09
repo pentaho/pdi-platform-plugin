@@ -120,6 +120,9 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
   protected static final String SAFE_MODE_PROPERTY = "settings/safe_mode";
   protected static final String GATHER_METRICS_PROPERTY = "settings/gather_metrics";
 
+  protected static final String USE_STORED_VARIABLES_PROPERTY = "KETTLE_USE_STORED_VARIABLES";
+  protected static final boolean USE_STORED_VARIABLES_DEFAULT = false; // Default: use kettle.properties
+
   private MemoryResultSet transformationOutputRows;
 
   private IPentahoResultSet injectorRows;
@@ -498,9 +501,47 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
   private void populateVariables( VariableSpace varSpace ) {
     if ( variables != null ) {
       for ( Map.Entry<String, String> entry : variables.entrySet() ) {
-        varSpace.setVariable( entry.getKey(), entry.getValue() );
+        String variableName = entry.getKey();
+        String storedValue = entry.getValue();
+        String resolvedValue = resolveVariableValue( variableName, storedValue );
+        varSpace.setVariable( variableName, resolvedValue );
       }
     }
+  }
+
+  /**
+   * Resolves the value for a variable based on the configured variable source preference.
+   * <p>
+   * When {@code KETTLE_USE_STORED_VARIABLES} is not set or set to "N"/"false" (default):
+   * Uses the value from JVM system properties (via {@link System#getProperty(String)}, including those loaded
+   * from {@code kettle.properties}) if available, otherwise falls back to the stored value.
+   * <p>
+   * When {@code KETTLE_USE_STORED_VARIABLES} is set to "Y"/"true":
+   * Always uses the stored value, ignoring JVM system property overrides (for example, those from
+   * {@code kettle.properties}).
+   *
+   * @param variableName the name of the variable
+   * @param storedValue the value that was stored
+   * @return the resolved value to use
+   */
+  @VisibleForTesting
+  protected String resolveVariableValue( String variableName, String storedValue ) {
+    if ( isUseStoredVariables() ) {
+      // Explicitly configured to use stored values
+      return storedValue;
+    }
+    // Default behavior: prefer kettle.properties, fall back to stored value
+    String kettlePropertiesValue = System.getProperty( variableName );
+    return kettlePropertiesValue != null ? kettlePropertiesValue : storedValue;
+  }
+
+  @VisibleForTesting
+  protected boolean isUseStoredVariables() {
+    String propertyValue = System.getProperty( USE_STORED_VARIABLES_PROPERTY );
+    if ( propertyValue != null ) {
+      return "Y".equalsIgnoreCase( propertyValue ) || "true".equalsIgnoreCase( propertyValue );
+    }
+    return USE_STORED_VARIABLES_DEFAULT;
   }
 
   protected boolean customizeTrans( Trans trans ) {
