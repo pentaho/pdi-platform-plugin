@@ -16,11 +16,13 @@ package org.pentaho.platform.plugin.kettle;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.vfs2.FileObject;
 import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.IPluginManager;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.api.util.IPdiContentProvider;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.services.solution.SimpleContentGenerator;
 import org.pentaho.util.messages.LocaleHelper;
@@ -50,11 +52,11 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
     IParameterProvider pathParams = parameterProviders.get( PATH );
     IParameterProvider requestParams = parameterProviders.get( IParameterProvider.SCOPE_REQUEST );
 
-    RepositoryFile file = null;
+    Object file = null;
 
     if ( pathParams != null ) {
 
-      file = (RepositoryFile) pathParams.getParameter( FILE );
+      file = pathParams.getParameter( FILE );
 
     } else {
 
@@ -68,8 +70,19 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
         (IPdiContentProvider) PentahoSystem.get( IPluginManager.class ).getBean(
             IPdiContentProvider.class.getSimpleName() );
 
-    Map<String, String> userParams = provider.getUserParameters( file.getPath() );
-    Map<String, String> userVariables = provider.getVariables( file.getPath() );
+    Map<String, String> userParams = new HashMap<>();
+    Map<String, String> userVariables = new HashMap<>();
+
+    if ( null != file && file instanceof RepositoryFile repositoryFile ) {
+      userParams.putAll( provider.getUserParameters( repositoryFile.getPath() ) );
+      userVariables.putAll( provider.getVariables( repositoryFile.getPath() ) );
+    } else if ( null != file && file instanceof FileObject fileObject ) {
+      userParams.putAll( provider.getUserParameters( fileObject ) );
+      userVariables.putAll( provider.getVariables( fileObject ) );
+    } else {
+      genLogIdFromSession( PentahoSessionHolder.getSession() );
+      warn( "File is null or unexpected object type for file: " + ( file != null ? file.toString() : "null" ) );
+    }
 
     // Ultimately, user variables come from inspecting strings in the transmeta and matching on "${" and "}"
     // this means that if we have a param defined and have a reference it somewhere in the ktr, it will show up
