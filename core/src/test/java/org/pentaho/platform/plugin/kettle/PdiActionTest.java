@@ -23,6 +23,8 @@ import org.pentaho.commons.connection.memory.MemoryMetaData;
 import org.pentaho.commons.connection.memory.MemoryResultSet;
 import org.pentaho.di.core.Result;
 import org.pentaho.di.core.logging.LogLevel;
+import org.pentaho.di.core.variables.VariableSpace;
+import org.pentaho.di.core.variables.Variables;
 import org.pentaho.di.job.Job;
 import org.pentaho.di.job.JobExecutionConfiguration;
 import org.pentaho.di.job.JobMeta;
@@ -549,5 +551,59 @@ public class PdiActionTest {
     doReturn( props ).when( spiedPdiAction ).getPluginSettings();
 
     return spiedPdiAction;
+  }
+
+  @Test
+  public void testPopulateVariables_nonEmptyValueIsWritten() {
+    // When the variables map carries an actual (non-empty) value, it should be written
+    // directly to the VariableSpace, overriding whatever was there before.
+    PdiAction action = new PdiAction();
+
+    Map<String, String> vars = new HashMap<>();
+    vars.put( "project", "explicitValue" );
+    action.setVariables( vars );
+
+    VariableSpace varSpace = new Variables();
+    varSpace.setVariable( "project", "kettlePropsValue" );
+
+    action.populateVariables( varSpace );
+
+    assertEquals( "explicitValue", varSpace.getVariable( "project" ) );
+  }
+
+  @Test
+  public void testPopulateVariables_defersToKettlePropertiesWhenNotSet() {
+    // When the user did NOT provide a value (varArgs has empty string),
+    // the VariableSpace should retain its kettle.properties value.
+    PdiAction action = new PdiAction();
+
+    Map<String, String> variablesManifest = new HashMap<>();
+    variablesManifest.put( "project", "" );
+    action.setVariables( variablesManifest );
+
+    VariableSpace varSpace = new Variables();
+    varSpace.setVariable( "project", "kettlePropsValue" );
+
+    action.populateVariables( varSpace );
+
+    // kettle.properties value should be preserved
+    assertEquals( "kettlePropsValue", varSpace.getVariable( "project" ) );
+  }
+
+  @Test
+  public void testPopulateVariables_defersWhenVarArgsMissing() {
+    // When the variable is not present in varArgs at all, kettle.properties value is preserved.
+    PdiAction action = new PdiAction();
+
+    Map<String, String> variablesManifest = new HashMap<>();
+    variablesManifest.put( "project", "" );
+    action.setVariables( variablesManifest );
+
+    VariableSpace varSpace = new Variables();
+    varSpace.setVariable( "project", "kettlePropsValue" );
+
+    action.populateVariables( varSpace );
+
+    assertEquals( "kettlePropsValue", varSpace.getVariable( "project" ) );
   }
 }

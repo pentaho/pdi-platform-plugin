@@ -491,14 +491,29 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     populateVariables( varSpace );
 
     for ( Map.Entry<String, Object> entry : varArgs.entrySet() ) {
+      if ( variables != null && variables.containsKey( entry.getKey() ) ) {
+        // Variable declared in the variables map: only override with the root-level value
+        // if it is non-empty (user explicitly set it at schedule time); otherwise keep the
+        // value already in varSpace (from kettle.properties / file context).
+        if ( entry.getValue() != null && !entry.getValue().toString().isEmpty() ) {
+          varSpace.setVariable( entry.getKey(), entry.getValue().toString() );
+        }
+        continue;
+      }
       varSpace.setVariable( entry.getKey(), ( entry.getValue() != null ) ? entry.getValue().toString() : null );
     }
   }
 
-  private void populateVariables( VariableSpace varSpace ) {
+  @VisibleForTesting
+  void populateVariables( VariableSpace varSpace ) {
     if ( variables != null ) {
       for ( Map.Entry<String, String> entry : variables.entrySet() ) {
-        varSpace.setVariable( entry.getKey(), entry.getValue() );
+        // Write the variable only when the map carries an actual value.
+        // Empty / null entries are skipped so that the VariableSpace retains whatever
+        // value it already has (e.g. from kettle.properties or project/file context).
+        if ( entry.getValue() != null && !entry.getValue().isEmpty() ) {
+          varSpace.setVariable( entry.getKey(), entry.getValue() );
+        }
       }
     }
   }
