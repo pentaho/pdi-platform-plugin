@@ -26,6 +26,7 @@ import org.pentaho.di.core.logging.LogLevel;
 import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.core.variables.Variables;
 import org.pentaho.di.job.Job;
+import org.pentaho.di.core.parameters.NamedParams;
 import org.pentaho.di.job.JobExecutionConfiguration;
 import org.pentaho.di.job.JobMeta;
 import org.pentaho.di.repository.Repository;
@@ -591,19 +592,160 @@ public class PdiActionTest {
   }
 
   @Test
-  public void testPopulateVariables_defersWhenVarArgsMissing() {
-    // When the variable is not present in varArgs at all, kettle.properties value is preserved.
+  public void testPopulateInputs_declaredVariable_emptyManifest_nonEmptyVarArgs_shouldUseVarArgs() {
+    // When a variable is declared in the manifest with an empty value, and varArgs
+    // provides a non-empty value for that variable, varArgs should override.
     PdiAction action = new PdiAction();
 
     Map<String, String> variablesManifest = new HashMap<>();
-    variablesManifest.put( "project", "" );
+    variablesManifest.put( "project", "" );  // Empty manifest entry
     action.setVariables( variablesManifest );
+
+    Map<String, Object> varArgs = new HashMap<>();
+    varArgs.put( "project", "userProvidedValue" );  // Non-empty varArgs value
+    action.setVarArgs( varArgs );
 
     VariableSpace varSpace = new Variables();
     varSpace.setVariable( "project", "kettlePropsValue" );
 
-    action.populateVariables( varSpace );
+    NamedParams paramHolder = Mockito.mock( NamedParams.class );
 
+    action.populateInputs( paramHolder, varSpace );
+
+    // varArgs non-empty value should override kettle.properties
+    assertEquals( "userProvidedValue", varSpace.getVariable( "project" ) );
+  }
+
+  @Test
+  public void testPopulateInputs_declaredVariable_emptyManifest_emptyVarArgs_shouldDeferToDefaults() {
+    // When a variable is declared in the manifest with an empty value, and varArgs also
+    // provides an empty/null value, the VariableSpace should retain its existing value
+    // (from kettle.properties or file context).
+    PdiAction action = new PdiAction();
+
+    Map<String, String> variablesManifest = new HashMap<>();
+    variablesManifest.put( "project", "" );  // Empty manifest entry
+    action.setVariables( variablesManifest );
+
+    Map<String, Object> varArgs = new HashMap<>();
+    varArgs.put( "project", "" );  // Empty varArgs value
+    action.setVarArgs( varArgs );
+
+    VariableSpace varSpace = new Variables();
+    varSpace.setVariable( "project", "kettlePropsValue" );
+
+    NamedParams paramHolder = Mockito.mock( NamedParams.class );
+
+    action.populateInputs( paramHolder, varSpace );
+
+    // kettleProps value should be preserved when varArgs is empty
     assertEquals( "kettlePropsValue", varSpace.getVariable( "project" ) );
+  }
+
+  @Test
+  public void testPopulateInputs_declaredVariable_nonEmptyManifest_shouldUseManifest() {
+    // When a variable is declared in the manifest with an explicit (non-empty) value,
+    // and varArgs also provides a non-empty value, the manifest value should be used
+    // (as it's processed first by populateVariables).
+    PdiAction action = new PdiAction();
+
+    Map<String, String> variablesManifest = new HashMap<>();
+    variablesManifest.put( "project", "manifestValue" );  // Non-empty manifest entry
+    action.setVariables( variablesManifest );
+
+    Map<String, Object> varArgs = new HashMap<>();
+    varArgs.put( "project", "userValue" );  // Non-empty varArgs value
+    action.setVarArgs( varArgs );
+
+    VariableSpace varSpace = new Variables();
+    varSpace.setVariable( "project", "kettlePropsValue" );
+
+    NamedParams paramHolder = Mockito.mock( NamedParams.class );
+
+    action.populateInputs( paramHolder, varSpace );
+
+    // varArgs non-empty value overrides manifest, but this test documents the precedence
+    assertEquals( "userValue", varSpace.getVariable( "project" ) );
+  }
+
+  @Test
+  public void testPopulateInputs_undeclaredVariable_shouldApplyVarArgs() {
+    // When a variable is NOT declared in the manifest (undeclared), varArgs values
+    // should always be applied, regardless of whether they're empty or not.
+    PdiAction action = new PdiAction();
+
+    Map<String, String> variablesManifest = new HashMap<>();
+    variablesManifest.put( "declaredVar", "manifestValue" );
+    action.setVariables( variablesManifest );
+
+    Map<String, Object> varArgs = new HashMap<>();
+    varArgs.put( "undeclaredVar", "undeclaredValue" );  // Not in manifest
+    action.setVarArgs( varArgs );
+
+    VariableSpace varSpace = new Variables();
+
+    NamedParams paramHolder = Mockito.mock( NamedParams.class );
+
+    action.populateInputs( paramHolder, varSpace );
+
+    // Undeclared varArgs should be applied
+    assertEquals( "undeclaredValue", varSpace.getVariable( "undeclaredVar" ) );
+  }
+
+  @Test
+  public void testPopulateInputs_undeclaredVariable_nullValue_shouldStillApply() {
+    // When a variable is NOT declared in the manifest and varArgs provides a null value,
+    // it should still be applied (set to null in the VariableSpace).
+    PdiAction action = new PdiAction();
+
+    Map<String, String> variablesManifest = new HashMap<>();
+    variablesManifest.put( "declaredVar", "manifestValue" );
+    action.setVariables( variablesManifest );
+
+    Map<String, Object> varArgs = new HashMap<>();
+    varArgs.put( "undeclaredVar", null );  // Null value for undeclared variable
+    action.setVarArgs( varArgs );
+
+    VariableSpace varSpace = new Variables();
+    varSpace.setVariable( "undeclaredVar", "existingValue" );
+
+    NamedParams paramHolder = Mockito.mock( NamedParams.class );
+
+    action.populateInputs( paramHolder, varSpace );
+
+    // Undeclared varArgs with null should clear/set to null
+    assertNull( varSpace.getVariable( "undeclaredVar" ) );
+  }
+
+  @Test
+  public void testPopulateInputs_mixedDeclaredAndUndeclared() {
+    // Complex scenario: mix of declared and undeclared variables with various empty/non-empty states.
+    PdiAction action = new PdiAction();
+
+    Map<String, String> variablesManifest = new HashMap<>();
+    variablesManifest.put( "declared1", "" );           // Empty declared
+    variablesManifest.put( "declared2", "manifest2" );  // Non-empty declared
+    action.setVariables( variablesManifest );
+
+    Map<String, Object> varArgs = new HashMap<>();
+    varArgs.put( "declared1", "varArgs1" );      // Override empty declared with non-empty varArgs
+    varArgs.put( "declared2", "" );              // Empty varArgs for non-empty declared
+    varArgs.put( "undeclared", "undeclaredVal" ); // Undeclared variable
+    action.setVarArgs( varArgs );
+
+    VariableSpace varSpace = new Variables();
+    varSpace.setVariable( "declared1", "default1" );
+    varSpace.setVariable( "declared2", "default2" );
+
+    NamedParams paramHolder = Mockito.mock( NamedParams.class );
+
+    action.populateInputs( paramHolder, varSpace );
+
+    // declared1: empty manifest + non-empty varArgs -> varArgs wins
+    assertEquals( "varArgs1", varSpace.getVariable( "declared1" ) );
+    // declared2: non-empty manifest + empty varArgs -> manifest (set first by populateVariables) then varArgs empty (no change)
+    assertEquals( "manifest2", varSpace.getVariable( "declared2" ) );
+    // undeclared: always applies from varArgs
+    assertEquals( "undeclaredVal", varSpace.getVariable( "undeclared" ) );
   }
 }

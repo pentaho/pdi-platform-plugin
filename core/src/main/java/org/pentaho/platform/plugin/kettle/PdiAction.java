@@ -477,7 +477,8 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     return path;
   }
 
-  private void populateInputs( NamedParams paramHolder, VariableSpace varSpace ) {
+  @VisibleForTesting
+  protected void populateInputs( NamedParams paramHolder, VariableSpace varSpace ) {
     if ( parameters != null ) {
       for ( Map.Entry<String, String> entry : parameters.entrySet() ) {
         try {
