@@ -56,10 +56,15 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -592,81 +597,52 @@ public class PdiActionTest {
     assertEquals( "kettlePropsValue", varSpace.getVariable( "project" ) );
   }
 
-  @Test
-  public void testPopulateInputs_declaredVariable_emptyManifest_nonEmptyVarArgs_shouldUseVarArgs() {
-    // When a variable is declared in the manifest with an empty value, and varArgs
-    // provides a non-empty value for that variable, varArgs should override.
-    PdiAction action = new PdiAction();
+  @RunWith( Parameterized.class )
+  public static class DeclaredVariablePrecedenceTest {
 
-    Map<String, String> variablesManifest = new HashMap<>();
-    variablesManifest.put( "project", "" );  // Empty manifest entry
-    action.setVariables( variablesManifest );
+    @Parameterized.Parameters( name = "manifest=''{0}'' varArgs=''{1}'' expected=''{2}''" )
+    public static Collection<Object[]> data() {
+      return Arrays.asList( new Object[][] {
+        // empty manifest + non-empty varArgs → varArgs wins
+        { "",              "userProvidedValue", "userProvidedValue" },
+        // empty manifest + empty varArgs → defer to kettle.properties
+        { "",              "",                  "kettlePropsValue"  },
+        // non-empty manifest + non-empty varArgs → varArgs takes precedence (processed last)
+        { "manifestValue", "userValue",         "userValue"         }
+      } );
+    }
 
-    Map<String, Object> varArgs = new HashMap<>();
-    varArgs.put( "project", "userProvidedValue" );  // Non-empty varArgs value
-    action.setVarArgs( varArgs );
+    private final String manifestValue;
+    private final String varArgsValue;
+    private final String expected;
 
-    VariableSpace varSpace = new Variables();
-    varSpace.setVariable( "project", "kettlePropsValue" );
+    public DeclaredVariablePrecedenceTest( String manifestValue, String varArgsValue, String expected ) {
+      this.manifestValue = manifestValue;
+      this.varArgsValue = varArgsValue;
+      this.expected = expected;
+    }
 
-    NamedParams paramHolder = mock( NamedParams.class );
+    @Test
+    public void testPopulateInputs_declaredVariable_precedence() {
+      PdiAction action = new PdiAction();
 
-    action.populateInputs( paramHolder, varSpace );
+      Map<String, String> variablesManifest = new HashMap<>();
+      variablesManifest.put( "project", manifestValue );
+      action.setVariables( variablesManifest );
 
-    // varArgs non-empty value should override kettle.properties
-    assertEquals( "userProvidedValue", varSpace.getVariable( "project" ) );
-  }
+      Map<String, Object> varArgs = new HashMap<>();
+      varArgs.put( "project", varArgsValue );
+      action.setVarArgs( varArgs );
 
-  @Test
-  public void testPopulateInputs_declaredVariable_emptyManifest_emptyVarArgs_shouldDeferToDefaults() {
-    // When a variable is declared in the manifest with an empty value, and varArgs also
-    // provides an empty/null value, the VariableSpace should retain its existing value
-    // (from kettle.properties or file context).
-    PdiAction action = new PdiAction();
+      VariableSpace varSpace = new Variables();
+      varSpace.setVariable( "project", "kettlePropsValue" );
 
-    Map<String, String> variablesManifest = new HashMap<>();
-    variablesManifest.put( "project", "" );  // Empty manifest entry
-    action.setVariables( variablesManifest );
+      NamedParams paramHolder = mock( NamedParams.class );
 
-    Map<String, Object> varArgs = new HashMap<>();
-    varArgs.put( "project", "" );  // Empty varArgs value
-    action.setVarArgs( varArgs );
+      action.populateInputs( paramHolder, varSpace );
 
-    VariableSpace varSpace = new Variables();
-    varSpace.setVariable( "project", "kettlePropsValue" );
-
-    NamedParams paramHolder = mock( NamedParams.class );
-
-    action.populateInputs( paramHolder, varSpace );
-
-    // kettleProps value should be preserved when varArgs is empty
-    assertEquals( "kettlePropsValue", varSpace.getVariable( "project" ) );
-  }
-
-  @Test
-  public void testPopulateInputs_declaredVariable_nonEmptyManifest_varArgsTakePrecedence() {
-    // When a variable is declared in the manifest with an explicit (non-empty) value,
-    // and varArgs also provides a non-empty value, the varArgs value takes precedence
-    // (as it's processed after populateVariables).
-    PdiAction action = new PdiAction();
-
-    Map<String, String> variablesManifest = new HashMap<>();
-    variablesManifest.put( "project", "manifestValue" );  // Non-empty manifest entry
-    action.setVariables( variablesManifest );
-
-    Map<String, Object> varArgs = new HashMap<>();
-    varArgs.put( "project", "userValue" );  // Non-empty varArgs value
-    action.setVarArgs( varArgs );
-
-    VariableSpace varSpace = new Variables();
-    varSpace.setVariable( "project", "kettlePropsValue" );
-
-    NamedParams paramHolder = mock( NamedParams.class );
-
-    action.populateInputs( paramHolder, varSpace );
-
-    // varArgs non-empty value overrides manifest (varArgs processed last)
-    assertEquals( "userValue", varSpace.getVariable( "project" ) );
+      assertEquals( expected, varSpace.getVariable( "project" ) );
+    }
   }
 
   @Test
