@@ -643,10 +643,10 @@ public class PdiActionTest {
   }
 
   @Test
-  public void testPopulateInputs_declaredVariable_nonEmptyManifest_shouldUseManifest() {
+  public void testPopulateInputs_declaredVariable_nonEmptyManifest_varArgsTakePrecedence() {
     // When a variable is declared in the manifest with an explicit (non-empty) value,
-    // and varArgs also provides a non-empty value, the manifest value should be used
-    // (as it's processed first by populateVariables).
+    // and varArgs also provides a non-empty value, the varArgs value takes precedence
+    // (as it's processed after populateVariables).
     PdiAction action = new PdiAction();
 
     Map<String, String> variablesManifest = new HashMap<>();
@@ -664,7 +664,7 @@ public class PdiActionTest {
 
     action.populateInputs( paramHolder, varSpace );
 
-    // varArgs non-empty value overrides manifest, but this test documents the precedence
+    // varArgs non-empty value overrides manifest (varArgs processed last)
     assertEquals( "userValue", varSpace.getVariable( "project" ) );
   }
 
