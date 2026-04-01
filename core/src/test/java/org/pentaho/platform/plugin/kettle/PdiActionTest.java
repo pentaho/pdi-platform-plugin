@@ -65,6 +65,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doReturn;
@@ -608,7 +609,7 @@ public class PdiActionTest {
     VariableSpace varSpace = new Variables();
     varSpace.setVariable( "project", "kettlePropsValue" );
 
-    NamedParams paramHolder = Mockito.mock( NamedParams.class );
+    NamedParams paramHolder = mock( NamedParams.class );
 
     action.populateInputs( paramHolder, varSpace );
 
@@ -634,7 +635,7 @@ public class PdiActionTest {
     VariableSpace varSpace = new Variables();
     varSpace.setVariable( "project", "kettlePropsValue" );
 
-    NamedParams paramHolder = Mockito.mock( NamedParams.class );
+    NamedParams paramHolder = mock( NamedParams.class );
 
     action.populateInputs( paramHolder, varSpace );
 
@@ -660,7 +661,7 @@ public class PdiActionTest {
     VariableSpace varSpace = new Variables();
     varSpace.setVariable( "project", "kettlePropsValue" );
 
-    NamedParams paramHolder = Mockito.mock( NamedParams.class );
+    NamedParams paramHolder = mock( NamedParams.class );
 
     action.populateInputs( paramHolder, varSpace );
 
@@ -684,7 +685,7 @@ public class PdiActionTest {
 
     VariableSpace varSpace = new Variables();
 
-    NamedParams paramHolder = Mockito.mock( NamedParams.class );
+    NamedParams paramHolder = mock( NamedParams.class );
 
     action.populateInputs( paramHolder, varSpace );
 
@@ -709,7 +710,7 @@ public class PdiActionTest {
     VariableSpace varSpace = new Variables();
     varSpace.setVariable( "undeclaredVar", "existingValue" );
 
-    NamedParams paramHolder = Mockito.mock( NamedParams.class );
+    NamedParams paramHolder = mock( NamedParams.class );
 
     action.populateInputs( paramHolder, varSpace );
 
@@ -737,7 +738,7 @@ public class PdiActionTest {
     varSpace.setVariable( "declared1", "default1" );
     varSpace.setVariable( "declared2", "default2" );
 
-    NamedParams paramHolder = Mockito.mock( NamedParams.class );
+    NamedParams paramHolder = mock( NamedParams.class );
 
     action.populateInputs( paramHolder, varSpace );
 
