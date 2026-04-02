@@ -597,6 +597,28 @@ public class PdiActionTest {
     assertEquals( "kettlePropsValue", varSpace.getVariable( "project" ) );
   }
 
+  @Test
+  public void testPopulateVariables_emptyValue_noEnvironmentDefault_shouldBeBlank() {
+    // When the variables manifest has an empty value AND there is no kettle.properties
+    // backing (varSpace has no value), populateVariables() must explicitly set the
+    // variable to "" so that ${VAR} references resolve to empty string rather than
+    // remaining as a literal "${VAR}" placeholder.
+    // This covers the Spoon scheduling path where PROJECT_NAME is only in the variables
+    // manifest (not a top-level varArgs entry) with an empty value.
+    PdiAction action = new PdiAction();
+
+    Map<String, String> variablesManifest = new HashMap<>();
+    variablesManifest.put( "PROJECT_NAME", "" );
+    action.setVariables( variablesManifest );
+
+    VariableSpace varSpace = new Variables();
+    // PROJECT_NAME has no kettle.properties value (not set in varSpace)
+
+    action.populateVariables( varSpace );
+
+    assertEquals( "", varSpace.getVariable( "PROJECT_NAME" ) );
+  }
+
   @RunWith( Parameterized.class )
   public static class DeclaredVariablePrecedenceTest {
 
@@ -643,6 +665,32 @@ public class PdiActionTest {
 
       assertEquals( expected, varSpace.getVariable( "project" ) );
     }
+  }
+
+  @Test
+  public void testPopulateInputs_declaredVariable_emptyScheduleValue_noEnvironmentDefault_shouldBeBlank() {
+    // BISERVER-15478: A variable referenced in the KJB (so it's in the manifest) but with
+    // NO backing value in kettle.properties must be explicitly set to "" when the schedule
+    // value is empty. Without this fix, ${PROJECT_NAME} would remain as an unresolved literal.
+    PdiAction action = new PdiAction();
+
+    Map<String, String> variablesManifest = new HashMap<>();
+    variablesManifest.put( "PROJECT_NAME", "" );
+    action.setVariables( variablesManifest );
+
+    Map<String, Object> varArgs = new HashMap<>();
+    varArgs.put( "PROJECT_NAME", "" );
+    action.setVarArgs( varArgs );
+
+    // No kettle.properties value for PROJECT_NAME — no environment default exists
+    VariableSpace varSpace = new Variables();
+
+    NamedParams paramHolder = mock( NamedParams.class );
+
+    action.populateInputs( paramHolder, varSpace );
+
+    // Must be explicitly "" so ${PROJECT_NAME} resolves to empty, not stays as "${PROJECT_NAME}"
+    assertEquals( "", varSpace.getVariable( "PROJECT_NAME" ) );
   }
 
   @Test
