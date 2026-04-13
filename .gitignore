@@ -23,3 +23,5 @@ build-res/module-scripts/
 /dev-lib
 target/
 .idea/
+.vscode/launch.json
+.project
