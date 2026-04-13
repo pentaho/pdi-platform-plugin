@@ -23,7 +23,10 @@ import org.pentaho.commons.connection.memory.MemoryMetaData;
 import org.pentaho.commons.connection.memory.MemoryResultSet;
 import org.pentaho.di.core.Result;
 import org.pentaho.di.core.logging.LogLevel;
+import org.pentaho.di.core.variables.VariableSpace;
+import org.pentaho.di.core.variables.Variables;
 import org.pentaho.di.job.Job;
+import org.pentaho.di.core.parameters.NamedParams;
 import org.pentaho.di.job.JobExecutionConfiguration;
 import org.pentaho.di.job.JobMeta;
 import org.pentaho.di.repository.Repository;
@@ -53,15 +56,21 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doReturn;
@@ -549,5 +558,219 @@ public class PdiActionTest {
     doReturn( props ).when( spiedPdiAction ).getPluginSettings();
 
     return spiedPdiAction;
+  }
+
+  @Test
+  public void testPopulateVariables_nonEmptyValueIsWritten() {
+    // When the variables map carries an actual (non-empty) value, it should be written
+    // directly to the VariableSpace, overriding whatever was there before.
+    PdiAction action = new PdiAction();
+
+    Map<String, String> vars = new HashMap<>();
+    vars.put( "project", "explicitValue" );
+    action.setVariables( vars );
+
+    VariableSpace varSpace = new Variables();
+    varSpace.setVariable( "project", "kettlePropsValue" );
+
+    action.populateVariables( varSpace );
+
+    assertEquals( "explicitValue", varSpace.getVariable( "project" ) );
+  }
+
+  @Test
+  public void testPopulateVariables_defersToKettlePropertiesWhenNotSet() {
+    // When the user did NOT provide a value (varArgs has empty string),
+    // the VariableSpace should retain its kettle.properties value.
+    PdiAction action = new PdiAction();
+
+    Map<String, String> variablesManifest = new HashMap<>();
+    variablesManifest.put( "project", "" );
+    action.setVariables( variablesManifest );
+
+    VariableSpace varSpace = new Variables();
+    varSpace.setVariable( "project", "kettlePropsValue" );
+
+    action.populateVariables( varSpace );
+
+    // kettle.properties value should be preserved
+    assertEquals( "kettlePropsValue", varSpace.getVariable( "project" ) );
+  }
+
+  @Test
+  public void testPopulateVariables_emptyValue_noEnvironmentDefault_shouldBeBlank() {
+    // When the variables manifest has an empty value AND there is no kettle.properties
+    // backing (varSpace has no value), populateVariables() must explicitly set the
+    // variable to "" so that ${VAR} references resolve to empty string rather than
+    // remaining as a literal "${VAR}" placeholder.
+    // This covers the Spoon scheduling path where PROJECT_NAME is only in the variables
+    // manifest (not a top-level varArgs entry) with an empty value.
+    PdiAction action = new PdiAction();
+
+    Map<String, String> variablesManifest = new HashMap<>();
+    variablesManifest.put( "PROJECT_NAME", "" );
+    action.setVariables( variablesManifest );
+
+    VariableSpace varSpace = new Variables();
+    // PROJECT_NAME has no kettle.properties value (not set in varSpace)
+
+    action.populateVariables( varSpace );
+
+    assertEquals( "", varSpace.getVariable( "PROJECT_NAME" ) );
+  }
+
+  @RunWith( Parameterized.class )
+  public static class DeclaredVariablePrecedenceTest {
+
+    @Parameterized.Parameters( name = "manifest=''{0}'' varArgs=''{1}'' expected=''{2}''" )
+    public static Collection<Object[]> data() {
+      return Arrays.asList( new Object[][] {
+        // empty manifest + non-empty varArgs → varArgs wins
+        { "",              "userProvidedValue", "userProvidedValue" },
+        // empty manifest + empty varArgs → defer to kettle.properties
+        { "",              "",                  "kettlePropsValue"  },
+        // non-empty manifest + non-empty varArgs → varArgs takes precedence (processed last)
+        { "manifestValue", "userValue",         "userValue"         }
+      } );
+    }
+
+    private final String manifestValue;
+    private final String varArgsValue;
+    private final String expected;
+
+    public DeclaredVariablePrecedenceTest( String manifestValue, String varArgsValue, String expected ) {
+      this.manifestValue = manifestValue;
+      this.varArgsValue = varArgsValue;
+      this.expected = expected;
+    }
+
+    @Test
+    public void testPopulateInputs_declaredVariable_precedence() {
+      PdiAction action = new PdiAction();
+
+      Map<String, String> variablesManifest = new HashMap<>();
+      variablesManifest.put( "project", manifestValue );
+      action.setVariables( variablesManifest );
+
+      Map<String, Object> varArgs = new HashMap<>();
+      varArgs.put( "project", varArgsValue );
+      action.setVarArgs( varArgs );
+
+      VariableSpace varSpace = new Variables();
+      varSpace.setVariable( "project", "kettlePropsValue" );
+
+      NamedParams paramHolder = mock( NamedParams.class );
+
+      action.populateInputs( paramHolder, varSpace );
+
+      assertEquals( expected, varSpace.getVariable( "project" ) );
+    }
+  }
+
+  @Test
+  public void testPopulateInputs_declaredVariable_emptyScheduleValue_noEnvironmentDefault_shouldBeBlank() {
+    // BISERVER-15478: A variable referenced in the KJB (so it's in the manifest) but with
+    // NO backing value in kettle.properties must be explicitly set to "" when the schedule
+    // value is empty. Without this fix, ${PROJECT_NAME} would remain as an unresolved literal.
+    PdiAction action = new PdiAction();
+
+    Map<String, String> variablesManifest = new HashMap<>();
+    variablesManifest.put( "PROJECT_NAME", "" );
+    action.setVariables( variablesManifest );
+
+    Map<String, Object> varArgs = new HashMap<>();
+    varArgs.put( "PROJECT_NAME", "" );
+    action.setVarArgs( varArgs );
+
+    // No kettle.properties value for PROJECT_NAME — no environment default exists
+    VariableSpace varSpace = new Variables();
+
+    NamedParams paramHolder = mock( NamedParams.class );
+
+    action.populateInputs( paramHolder, varSpace );
+
+    // Must be explicitly "" so ${PROJECT_NAME} resolves to empty, not stays as "${PROJECT_NAME}"
+    assertEquals( "", varSpace.getVariable( "PROJECT_NAME" ) );
+  }
+
+  @Test
+  public void testPopulateInputs_undeclaredVariable_shouldApplyVarArgs() {
+    // When a variable is NOT declared in the manifest (undeclared), varArgs values
+    // should always be applied, regardless of whether they're empty or not.
+    PdiAction action = new PdiAction();
+
+    Map<String, String> variablesManifest = new HashMap<>();
+    variablesManifest.put( "declaredVar", "manifestValue" );
+    action.setVariables( variablesManifest );
+
+    Map<String, Object> varArgs = new HashMap<>();
+    varArgs.put( "undeclaredVar", "undeclaredValue" );  // Not in manifest
+    action.setVarArgs( varArgs );
+
+    VariableSpace varSpace = new Variables();
+
+    NamedParams paramHolder = mock( NamedParams.class );
+
+    action.populateInputs( paramHolder, varSpace );
+
+    // Undeclared varArgs should be applied
+    assertEquals( "undeclaredValue", varSpace.getVariable( "undeclaredVar" ) );
+  }
+
+  @Test
+  public void testPopulateInputs_undeclaredVariable_nullValue_shouldStillApply() {
+    // When a variable is NOT declared in the manifest and varArgs provides a null value,
+    // it should still be applied (set to null in the VariableSpace).
+    PdiAction action = new PdiAction();
+
+    Map<String, String> variablesManifest = new HashMap<>();
+    variablesManifest.put( "declaredVar", "manifestValue" );
+    action.setVariables( variablesManifest );
+
+    Map<String, Object> varArgs = new HashMap<>();
+    varArgs.put( "undeclaredVar", null );  // Null value for undeclared variable
+    action.setVarArgs( varArgs );
+
+    VariableSpace varSpace = new Variables();
+    varSpace.setVariable( "undeclaredVar", "existingValue" );
+
+    NamedParams paramHolder = mock( NamedParams.class );
+
+    action.populateInputs( paramHolder, varSpace );
+
+    // Undeclared varArgs with null should clear/set to null
+    assertNull( varSpace.getVariable( "undeclaredVar" ) );
+  }
+
+  @Test
+  public void testPopulateInputs_mixedDeclaredAndUndeclared() {
+    // Complex scenario: mix of declared and undeclared variables with various empty/non-empty states.
+    PdiAction action = new PdiAction();
+
+    Map<String, String> variablesManifest = new HashMap<>();
+    variablesManifest.put( "declared1", "" );           // Empty declared
+    variablesManifest.put( "declared2", "manifest2" );  // Non-empty declared
+    action.setVariables( variablesManifest );
+
+    Map<String, Object> varArgs = new HashMap<>();
+    varArgs.put( "declared1", "varArgs1" );      // Override empty declared with non-empty varArgs
+    varArgs.put( "declared2", "" );              // Empty varArgs for non-empty declared
+    varArgs.put( "undeclared", "undeclaredVal" ); // Undeclared variable
+    action.setVarArgs( varArgs );
+
+    VariableSpace varSpace = new Variables();
+    varSpace.setVariable( "declared1", "default1" );
+    varSpace.setVariable( "declared2", "default2" );
+
+    NamedParams paramHolder = mock( NamedParams.class );
+
+    action.populateInputs( paramHolder, varSpace );
+
+    // declared1: empty manifest + non-empty varArgs -> varArgs wins
+    assertEquals( "varArgs1", varSpace.getVariable( "declared1" ) );
+    // declared2: non-empty manifest + empty varArgs -> manifest (set first by populateVariables) then varArgs empty (no change)
+    assertEquals( "manifest2", varSpace.getVariable( "declared2" ) );
+    // undeclared: always applies from varArgs
+    assertEquals( "undeclaredVal", varSpace.getVariable( "undeclared" ) );
   }
 }
