@@ -477,7 +477,8 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     return path;
   }
 
-  private void populateInputs( NamedParams paramHolder, VariableSpace varSpace ) {
+  @VisibleForTesting
+  protected void populateInputs( NamedParams paramHolder, VariableSpace varSpace ) {
     if ( parameters != null ) {
       for ( Map.Entry<String, String> entry : parameters.entrySet() ) {
         try {
@@ -491,14 +492,46 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     populateVariables( varSpace );
 
     for ( Map.Entry<String, Object> entry : varArgs.entrySet() ) {
+      if ( variables != null && variables.containsKey( entry.getKey() ) ) {
+        // Variable declared in the variables map: only override with the root-level value
+        // if it is non-empty (user explicitly set it at schedule time); otherwise keep the
+        // value already in varSpace (from kettle.properties / file context).
+        String scheduleValue = ( entry.getValue() != null ) ? entry.getValue().toString() : "";
+        if ( !scheduleValue.isEmpty() ) {
+          varSpace.setVariable( entry.getKey(), scheduleValue );
+        } else {
+          // Schedule value is empty. Only explicitly blank it if there is no existing value
+          // in varSpace (e.g. from kettle.properties). Variables with no environment default
+          // must be set to "" so that ${VAR} references resolve to empty string rather than
+          // remaining as a literal "${VAR}" placeholder.
+          String existingValue = varSpace.getVariable( entry.getKey() );
+          if ( existingValue == null || existingValue.isEmpty() ) {
+            varSpace.setVariable( entry.getKey(), "" );
+          }
+        }
+        continue;
+      }
       varSpace.setVariable( entry.getKey(), ( entry.getValue() != null ) ? entry.getValue().toString() : null );
     }
   }
 
-  private void populateVariables( VariableSpace varSpace ) {
+  @VisibleForTesting
+  void populateVariables( VariableSpace varSpace ) {
     if ( variables != null ) {
       for ( Map.Entry<String, String> entry : variables.entrySet() ) {
-        varSpace.setVariable( entry.getKey(), entry.getValue() );
+        if ( entry.getValue() != null && !entry.getValue().isEmpty() ) {
+          // Non-empty schedule value: always apply it.
+          varSpace.setVariable( entry.getKey(), entry.getValue() );
+        } else {
+          // Schedule value is empty/null. Only explicitly blank it if varSpace has no existing
+          // value (e.g. from kettle.properties). Variables with no environment default must be
+          // set to "" so that ${VAR} references resolve to empty string rather than remaining
+          // as a literal "${VAR}" placeholder.
+          String existingValue = varSpace.getVariable( entry.getKey() );
+          if ( existingValue == null || existingValue.isEmpty() ) {
+            varSpace.setVariable( entry.getKey(), "" );
+          }
+        }
       }
     }
   }
