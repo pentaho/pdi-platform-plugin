@@ -262,6 +262,10 @@ public class PdiAction implements IAction, IVarArgsAction, ILoggingAction, RowLi
     checkIfPvfs();
 
     try {
+      // ensure fresh config for each execution
+      if ( repository != null ) {
+        repository.getBowl().clearCache();
+      }
 
       if ( transformation != null ) {
         executeTransformation( repository );

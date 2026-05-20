@@ -27,6 +27,7 @@ import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.core.variables.Variables;
 import org.pentaho.di.job.Job;
 import org.pentaho.di.core.parameters.NamedParams;
+import org.pentaho.di.core.bowl.Bowl;
 import org.pentaho.di.job.JobExecutionConfiguration;
 import org.pentaho.di.job.JobMeta;
 import org.pentaho.di.repository.Repository;
@@ -73,6 +74,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -127,6 +129,26 @@ public class PdiActionTest {
   public void tearDown() {
     mp.stop();
     FileUtils.deleteQuietly( new File( "testTransformationVariableOverrides.out.txt" ) );
+  }
+
+  @Test
+  public void testExecuteClearsRepositoryBowlCache() throws Exception {
+    PdiAction action = getSpyPdiAction();
+    Repository repository = mock( Repository.class );
+    Bowl bowl = mock( Bowl.class );
+
+    doNothing().when( action ).validate();
+    doReturn( repository ).when( action ).connectToRepository();
+    doNothing().when( action ).executeTransformation( repository );
+    doReturn( bowl ).when( repository ).getBowl();
+
+    action.setTransformation( "dummy.ktr" );
+    action.execute();
+
+    verify( repository ).getBowl();
+    verify( bowl ).clearCache();
+    verify( action ).executeTransformation( repository );
+    verify( repository ).disconnect();
   }
 
   @Test( expected = Exception.class )
