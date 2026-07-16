@@ -13,7 +13,6 @@
 
 package org.pentaho.platform.plugin.kettle;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.ErrorHandler;
@@ -46,7 +45,7 @@ public class LoggingBufferAppender implements Appender {
 
   @Override
   public Layout<? extends Serializable> getLayout() {
-    throw new NotImplementedException();
+    throw new UnsupportedOperationException( "getLayout is not implemented" );
   }
 
   @Override
@@ -56,12 +55,12 @@ public class LoggingBufferAppender implements Appender {
 
   @Override
   public ErrorHandler getHandler() {
-    throw new NotImplementedException();
+    throw new UnsupportedOperationException( "getHandler is not implemented" );
   }
 
   @Override
   public void setHandler(ErrorHandler handler) {
-    throw new NotImplementedException();
+    throw new UnsupportedOperationException( "setHandler is not implemented" );
   }
 
   @Override
