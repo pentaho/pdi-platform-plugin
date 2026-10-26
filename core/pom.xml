@@ -142,4 +142,117 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>${maven-dependency-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>copy-disabled-kettle-plugin-zips</id>
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.pentaho.di.plugins</groupId>
+                  <artifactId>janino-plugins</artifactId>
+                  <version>${pdi.version}</version>
+                  <type>zip</type>
+                  <destFileName>janino-plugins.zip</destFileName>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.pentaho.di.plugins</groupId>
+                  <artifactId>eval-job-entry-plugins</artifactId>
+                  <version>${pdi.version}</version>
+                  <type>zip</type>
+                  <destFileName>eval-job-entry-plugins.zip</destFileName>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.pentaho.di.plugins</groupId>
+                  <artifactId>exec-process-plugins</artifactId>
+                  <version>${pdi.version}</version>
+                  <type>zip</type>
+                  <destFileName>exec-process-plugins.zip</destFileName>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.pentaho.di.plugins</groupId>
+                  <artifactId>exec-sql-plugins</artifactId>
+                  <version>${pdi.version}</version>
+                  <type>zip</type>
+                  <destFileName>exec-sql-plugins.zip</destFileName>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.pentaho.di.plugins</groupId>
+                  <artifactId>script-values-mod-plugins</artifactId>
+                  <version>${pdi.version}</version>
+                  <type>zip</type>
+                  <destFileName>script-values-mod-plugins.zip</destFileName>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.build.testOutputDirectory}/kettle-plugins</outputDirectory>
+              <stripVersion>false</stripVersion>
+              <excludeTransitive>true</excludeTransitive>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>prepare-disabled-kettle-test-plugins</id>
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <delete dir="${project.build.testOutputDirectory}/kettle-plugins/janino"/>
+                <delete dir="${project.build.testOutputDirectory}/kettle-plugins/eval-job-entry"/>
+                <delete dir="${project.build.testOutputDirectory}/kettle-plugins/exec-process"/>
+                <delete dir="${project.build.testOutputDirectory}/kettle-plugins/exec-sql"/>
+                <delete dir="${project.build.testOutputDirectory}/kettle-plugins/script-values-mod"/>
+
+                <unzip src="${project.build.testOutputDirectory}/kettle-plugins/janino-plugins.zip"
+                       dest="${project.build.testOutputDirectory}/kettle-plugins"/>
+                <delete file="${project.build.testOutputDirectory}/kettle-plugins/janino/.kettle-ignore"/>
+
+                <unzip src="${project.build.testOutputDirectory}/kettle-plugins/eval-job-entry-plugins.zip"
+                       dest="${project.build.testOutputDirectory}/kettle-plugins"/>
+                <delete file="${project.build.testOutputDirectory}/kettle-plugins/eval-job-entry/.kettle-ignore"/>
+
+                <unzip src="${project.build.testOutputDirectory}/kettle-plugins/exec-process-plugins.zip"
+                       dest="${project.build.testOutputDirectory}/kettle-plugins"/>
+                <delete file="${project.build.testOutputDirectory}/kettle-plugins/exec-process/.kettle-ignore"/>
+
+                <unzip src="${project.build.testOutputDirectory}/kettle-plugins/exec-sql-plugins.zip"
+                       dest="${project.build.testOutputDirectory}/kettle-plugins"/>
+                <delete file="${project.build.testOutputDirectory}/kettle-plugins/exec-sql/.kettle-ignore"/>
+
+                <unzip src="${project.build.testOutputDirectory}/kettle-plugins/script-values-mod-plugins.zip"
+                       dest="${project.build.testOutputDirectory}/kettle-plugins"/>
+                <delete file="${project.build.testOutputDirectory}/kettle-plugins/script-values-mod/.kettle-ignore"/>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <KETTLE_PLUGIN_BASE_FOLDERS>${project.build.testOutputDirectory}/kettle-plugins</KETTLE_PLUGIN_BASE_FOLDERS>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
