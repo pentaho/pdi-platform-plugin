@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.pentaho.commons.connection.IPentahoResultSet;
 import org.pentaho.commons.connection.memory.MemoryMetaData;
 import org.pentaho.commons.connection.memory.MemoryResultSet;
+import org.pentaho.di.core.KettleEnvironment;
 import org.pentaho.di.core.Result;
 import org.pentaho.di.core.logging.LogLevel;
 import org.pentaho.di.core.variables.VariableSpace;
@@ -99,11 +100,14 @@ public class PdiActionTest {
   MicroPlatform mp = new MicroPlatform( SOLUTION_REPOSITORY );
 
   @Before
-  public void init() throws SchedulerException, PlatformInitializationException {
+  public void init() throws Exception {
     System.setProperty( "java.naming.factory.initial", "org.osjava.sj.SimpleContextFactory" );
     System.setProperty( "org.osjava.sj.root", SOLUTION_REPOSITORY );
     System.setProperty( "org.osjava.sj.delimiter", "/" );
     System.setProperty( "PENTAHO_SYS_CFG_PATH", new File( SOLUTION_REPOSITORY + "/pentaho.xml" ).getAbsolutePath() );
+    System.setProperty( "KETTLE_PLUGIN_BASE_FOLDERS", new File( "target/test-classes/kettle-plugins" ).getAbsolutePath() );
+
+    KettleEnvironment.init( false );
 
     IPentahoSession session = new StandaloneSession();
     PentahoSessionHolder.setSession( session );
@@ -129,6 +133,9 @@ public class PdiActionTest {
   @After
   public void tearDown() {
     mp.stop();
+    // This test initializes the shared Kettle environment in @Before; clean it up here so later tests do not inherit
+    // stale plugin registration state from this JVM.
+    KettleEnvironment.reset();
     FileUtils.deleteQuietly( new File( "testTransformationVariableOverrides.out.txt" ) );
   }
 
